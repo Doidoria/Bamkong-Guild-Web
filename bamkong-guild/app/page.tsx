@@ -16,7 +16,8 @@ export default function BamkongGuildPage() {
         <Header />
         <main>
           <HeroSection />
-          <section id="about" className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
+          <section className="relative max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
+            <div id="about" className="absolute -top-[110px]"></div>
             <InfoCard 
               title="길드 소개"
               theme="light"

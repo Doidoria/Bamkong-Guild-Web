@@ -24,7 +24,7 @@ export default function InfoCard({ title, items, theme = 'light' }: InfoCardProp
   const titleStyles = {
     light: 'text-stone-800',
     dark: 'text-white',
-    warning: 'text-amber-900',
+    warning: 'text-amber-900', 
   };
 
   const bulletStyles = {
