@@ -10,8 +10,8 @@ export default function Header() {
           <img src="/images/logo.png" alt="밤콩 로고" className="h-10 w-auto object-contain fallback-bg bg-amber-100/20 rounded-lg" />
         </a>
         <nav className="flex gap-6 text-sm font-bold text-stone-700">
-          <a href="#about" className="hover:text-amber-700 transition-colors">길드 소개</a>
-          <a href="#contact" className="hover:text-amber-700 transition-colors">오픈 카톡</a>
+          <a href="#about" className="hover:text-amber-700 text-lg transition-colors">길드 소개</a>
+          <a href="#contact" className="hover:text-amber-700 text-lg transition-colors">오픈 카톡</a>
         </nav>
       </div>
     </header>

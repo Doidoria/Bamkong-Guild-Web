@@ -42,7 +42,7 @@ export default function InfoCard({ title, items, theme = 'light' }: InfoCardProp
           {items.map((item, idx) => (
             <li key={idx} className={`flex items-start gap-3 p-4 rounded-2xl shadow-sm ${itemBoxStyles[theme]}`}>
               <span className={`mt-0.5 text-lg font-black ${bulletStyles[theme]}`}>✓</span>
-              <div className="break-keep leading-relaxed font-medium text-[0.95rem]">
+              <div className="break-keep leading-relaxed font-medium text-[16px]">
                 {item}
               </div>
             </li>

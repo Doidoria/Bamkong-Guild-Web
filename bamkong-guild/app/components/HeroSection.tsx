@@ -15,7 +15,7 @@ export default function HeroSection() {
           alt="따뜻하고 자유로운 밤콩 길드입니다" 
           className="w-full pb-5 max-w-md md:max-w-lg object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" 
         />
-        <p className="text-base sm:text-sm text-stone-700 font-medium leading-relaxed max-w-lg bg-gradient-to-br from-white/90 via-amber-50/60 to-amber-100/40 backdrop-blur-sm p-5 rounded-2xl 
+        <p className="text-base sm:text-[15px] text-stone-700 font-medium leading-relaxed max-w-lg bg-gradient-to-br from-white/90 via-amber-50/60 to-amber-100/40 backdrop-blur-sm p-5 rounded-2xl 
             border border-amber-200/50 shadow-lg shadow-amber-100/50 break-keep text-center">
             소소하게 달리는 런너님들을 위한{' '}
             <span className="text-amber-600 font-bold">성인 친목 자유 디스코드 길드</span>입니다. <br className="hidden sm:inline" />
