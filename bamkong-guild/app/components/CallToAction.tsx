@@ -28,7 +28,7 @@ export default function CallToAction() {
         1:1 오픈톡 가입 문의하기
       </a>
       
-      <p className="mt-8 text-base text-stone-600 font-bold bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full border border-white/10">
+      <p className="mt-8 text-[15px] md:text-base text-stone-600 font-bold bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full border border-white/10">
         🌰 가벼운 대화 후 길드 디스코드 서버로 안내해 드립니다. 🌰
       </p>
     </section>
