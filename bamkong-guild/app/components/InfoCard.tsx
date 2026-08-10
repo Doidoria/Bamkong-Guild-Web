@@ -1,3 +1,4 @@
+// app/components/InfoCard.tsx
 import React from 'react';
 
 interface InfoCardProps {
@@ -9,9 +10,9 @@ interface InfoCardProps {
 export default function InfoCard({ title, items, theme = 'light' }: InfoCardProps) {
   // 이벤트 페이지 느낌을 내기 위한 반투명 글래스모피즘 스타일
   const cardStyles = {
-    light: 'bg-white/70 backdrop-blur-md border-white/50 text-stone-600',
-    dark: 'bg-amber-900/75 backdrop-blur-md border-amber-800/50 text-amber-50',
-    warning: 'bg-[#fff9f0]/80 backdrop-blur-md border-amber-200/50 text-stone-700',
+    light: 'bg-white/90 border-white/50 text-stone-600',
+    dark: 'bg-amber-900/90 border-amber-800/50 text-amber-50',
+    warning: 'bg-[#fff9f0]/95 border-amber-200/50 text-stone-700',
   };
 
   const itemBoxStyles = {

@@ -1,3 +1,4 @@
+// app/components/HeroSection.tsx
 import React from 'react';
 import { Heart } from 'lucide-react';
 
@@ -25,11 +26,11 @@ export default function HeroSection() {
       
       {/* 메인 캐릭터 이미지 영역 */}
       <div className="flex-1 relative w-full max-w-md">
-        <div className="absolute inset-0 bg-amber-200/30 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute inset-0 bg-amber-200/40 rounded-full blur-2xl transform-gpu"></div>
         <img 
           src="/images/hero-mascot.png" 
           alt="밤콩 메인 마스코트" 
-          className="relative z-10 w-full h-auto object-contain drop-shadow-2xl hover:-translate-y-4 transition-transform duration-500" 
+          className="relative z-10 w-full h-auto object-contain drop-shadow-2xl hover:-translate-y-4 transition-transform duration-500 transform-gpu" 
         />
       </div>
     </section>
