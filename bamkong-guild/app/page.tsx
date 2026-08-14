@@ -10,7 +10,7 @@ export default function BamkongGuildPage() {
   return (
     <div className="min-h-screen font-sans selection:bg-amber-200 overflow-x-hidden relative">
       <div className="fixed inset-0 -z-20 bg-[url('/images/bg-mobile.jpg')] md:bg-[url('/images/bg-main.jpg')] bg-cover bg-top"></div>
-      <div className="fixed inset-0 bg-white/50 -z-10 pointer-events-none transform-gpu"></div>
+      <div className="fixed inset-0 bg-white/20 -z-10 pointer-events-none transform-gpu"></div>
       
       {/* 실제 콘텐츠 영역 */}
       <div className="relative z-10">
