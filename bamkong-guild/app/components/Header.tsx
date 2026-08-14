@@ -11,6 +11,7 @@ export default function Header() {
         </a>
         <nav className="flex gap-6 text-sm font-bold text-stone-700">
           <a href="#about" className="hover:text-amber-700 text-lg transition-colors">길드 소개</a>
+          <a href="#skills" className="hover:text-amber-700 text-lg transition-colors">길드 스킬</a>
           <a href="#contact" className="hover:text-amber-700 text-lg transition-colors">오픈 카톡</a>
         </nav>
       </div>

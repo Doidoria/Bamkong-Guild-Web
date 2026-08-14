@@ -15,7 +15,7 @@ export default function CallToAction() {
         <img 
           src="/images/cta-sign.png" 
           alt="가입 문의 안내소" 
-          className="w-48 h-48 md:w-56 md:h-56 object-contain"
+          className="w-48 h-48 md:w-66 md:h-66 object-contain"
         />
       </a>
       

@@ -4,6 +4,7 @@ import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import InfoCard from './components/InfoCard';
 import CallToAction from './components/CallToAction';
+import GuildSkills from './components/GuildSkills';
 
 export default function BamkongGuildPage() {
   return (
@@ -67,6 +68,13 @@ export default function BamkongGuildPage() {
               ]}
             />
           </section>
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">#성인·친목</span>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">#TTS완비</span>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">#자율참여</span>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">#뉴비·복귀환영</span>
+          </div>
+          <GuildSkills />
           <CallToAction />
         </main>
 
