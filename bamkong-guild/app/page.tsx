@@ -33,7 +33,7 @@ export default function BamkongGuildPage() {
               title="가입 조건"
               theme="light"
               items={[
-                <><span className="block font-bold text-stone-800 mb-0.5">나이 및 성별</span> 03년생 이상 성인 (남성은 군필 또는 면제자)</>,
+                <><span className="block font-bold text-stone-800 mb-0.5">나이 및 성별</span> 05년생 이상 성인 (남성은 군필 또는 면제자)</>,
                 <>
                   <span className="block font-bold text-stone-800 mb-0.5">레벨 조건</span> 
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-50 rounded-md border border-amber-300 mr-1 align-text-bottom relative">
