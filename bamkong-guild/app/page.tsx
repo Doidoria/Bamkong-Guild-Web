@@ -80,7 +80,9 @@ export default function BamkongGuildPage() {
 
         <footer className="w-full py-12 text-center text-stone-600 text-sm bg-stone-100/50 mt-10 border-t border-stone-200/50 backdrop-blur-md break-keep">
           <p className="font-bold text-stone-700 mb-2">테일즈런너 밤콩 길드 (Since 2026)</p>
-          <p>ⓒ 2026 밤콩 길드. 모든 권리 보유.</p>
+          <p className="flex items-center justify-center gap-1">
+            ⓒ 2026 밤콩 길드. 모든 권리 보유.
+          </p>
         </footer>
       </div>
     </div>

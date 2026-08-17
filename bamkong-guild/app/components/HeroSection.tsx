@@ -20,7 +20,10 @@ export default function HeroSection() {
             소소하게 달리는 런너님들을 위한{' '}
             <span className="text-amber-600 font-bold">성인 친목 자유 디스코드 길드</span>입니다. <br className="hidden sm:inline" />
             억압 없이 즐겁게,{' '}
-            <span className="text-amber-600 font-bold">테일즈런너</span>를 함께 달려보아요! 🌰
+            <span className="text-amber-600 font-bold">테일즈런너</span>를 함께 달려보아요! 
+            <a href="/admin" className="hover:opacity-70 transition-opacity cursor-default opacity-80" title="관리자 전용">
+              🌰
+            </a>
         </p>
       </div>
       
