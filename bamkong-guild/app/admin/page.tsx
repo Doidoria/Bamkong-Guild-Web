@@ -119,12 +119,12 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center font-sans px-4">
-        <div className="bg-stone-900 border border-stone-800 p-10 rounded-[2rem] shadow-2xl shadow-black/50 max-w-sm w-full flex flex-col items-center">
+        <div className="bg-stone-900 border border-stone-800 p-8 sm:p-10 rounded-[2rem] shadow-2xl shadow-black/50 max-w-sm w-full flex flex-col items-center">
           <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-6 border border-amber-500/20">
             <Lock className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-black text-stone-100 mb-2">관리자 로그인</h1>
-          <p className="text-sm text-stone-400 mb-8 text-center">밤콩 길드 대시보드 접근 권한이 필요합니다.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-100 mb-2">관리자 로그인</h1>
+          <p className="text-xs sm:text-sm text-stone-400 mb-8 text-center">밤콩 길드 대시보드 접근 권한이 필요합니다.</p>
           <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
             <input 
               type="password" 
@@ -144,18 +144,18 @@ export default function AdminDashboard() {
   }
 
   // ⏳ 로딩 화면
-  if (loading) return <div className="min-h-screen bg-stone-950 flex items-center justify-center font-black text-amber-500 text-xl">데이터를 불러오는 중입니다... 🌰</div>;
+  if (loading) return <div className="min-h-screen bg-stone-950 flex items-center justify-center font-black text-amber-500 text-lg sm:text-xl">데이터를 불러오는 중입니다... 🌰</div>;
 
   // 💻 메인 대시보드 UI (다크 모드)
   return (
-    <div className="min-h-screen bg-stone-950 p-6 md:p-10 font-sans text-stone-300">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-stone-800 pb-6">
+    <div className="min-h-screen bg-stone-950 p-4 sm:p-6 md:p-10 font-sans text-stone-300">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-stone-800 pb-4 md:pb-6">
           <div>
-            <h1 className="text-3xl font-black text-stone-100 flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-black text-stone-100 flex items-center gap-2 sm:gap-3">
               <span className="text-amber-500">🌰</span> 밤콩 관리자 대시보드
             </h1>
-            <p className="text-sm text-stone-400 font-medium mt-2">
+            <p className="text-xs sm:text-sm text-stone-400 font-medium mt-2">
               길드원 가입일, 등업 조건, 경고 및 휴식 현황을 효율적으로 관리하세요.
             </p>
           </div>

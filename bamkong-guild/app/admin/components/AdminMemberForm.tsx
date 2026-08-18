@@ -1,4 +1,3 @@
-//app/admin/components/AdminMemberForm.tsx
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { getDaysSinceJoined } from '../utils';
@@ -24,27 +23,27 @@ export default function AdminMemberForm({ onAddMember }: Props) {
   };
 
   return (
-    <div className="bg-stone-900 p-6 rounded-2xl shadow-lg border border-stone-800">
-      <h2 className="text-lg font-bold text-stone-100 mb-4 flex items-center gap-2">
+    <div className="bg-stone-900 p-4 sm:p-6 rounded-2xl shadow-lg border border-stone-800">
+      <h2 className="text-base sm:text-lg font-bold text-stone-100 mb-4 flex items-center gap-2">
         <PlusCircle className="w-5 h-5 text-amber-500" /> 신규 길드원 수동 등록
       </h2>
-      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3 sm:gap-4">
         <input
           type="text"
           placeholder="테런 닉네임 입력"
           value={newNickname}
           onChange={(e) => setNewNickname(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium text-sm transition-all"
+          className="flex-1 w-full px-4 py-3 md:py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium text-sm transition-all"
         />
         <input
           type="date"
           value={newJoinedAt}
           onChange={(e) => setNewJoinedAt(e.target.value)}
-          className="px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium text-sm transition-all [color-scheme:dark]"
+          className="w-full md:w-auto px-4 py-3 md:py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium text-sm transition-all [color-scheme:dark]"
         />
         <button
           type="submit"
-          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-900/20 transition-colors text-sm whitespace-nowrap"
+          className="w-full md:w-auto px-6 py-3 md:py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-900/20 transition-colors text-sm whitespace-nowrap"
         >
           길드원 등록
         </button>
