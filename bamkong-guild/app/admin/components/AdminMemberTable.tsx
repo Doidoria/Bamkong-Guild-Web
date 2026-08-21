@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Clock, CheckCircle2, UserX, FileText, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Clock, CheckCircle2, UserX, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from '../utils';
 import { GuildMember, AdminStatsData } from '../types';
 import MemberDetailModal from './MemberDetailModal';
@@ -13,10 +13,20 @@ interface Props {
   onDeleteMember: (id: string) => void;
 }
 
+const ITEMS_PER_PAGE = 10; // 한 페이지당 보여줄 길드원 수
+
 export default function AdminMemberTable({ members, stats, onPromote, onWarningChange, onUpdateMember, onDeleteMember }: Props) {
   const [search, setSearch] = useState('');
   const [selectedTab, setSelectedTab] = useState<'all' | 'promotions' | 'warnings' | 'breaks' | 'blacklists'>('all');
   const [selectedMember, setSelectedMember] = useState<GuildMember | null>(null);
+  
+  // 📄 페이지네이션 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 검색어나 탭이 변경되면 항상 1페이지로 돌아가도록 초기화
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedTab]);
 
   const handleExportCSV = () => {
     if (members.length === 0) {
@@ -78,15 +88,22 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
     return true;
   });
 
+  // 📄 페이지네이션 계산 로직
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+  const paginatedMembers = filteredMembers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const blacklistCount = members.filter((m) => m.is_blacklisted).length;
 
   return (
-    <div className="bg-stone-900 rounded-2xl shadow-xl shadow-black/20 border border-stone-800 overflow-hidden">
+    <div className="bg-stone-900 rounded-2xl shadow-xl shadow-black/20 border border-stone-800 overflow-hidden flex flex-col">
       
       {/* 📱 모바일 대응 툴바 헤더 */}
       <div className="p-4 sm:p-5 md:p-6 border-b border-stone-800 flex flex-col gap-4">
         
-        {/* 탭 버튼들 (가로 스크롤 & 예쁜 스크롤바 적용) */}
+        {/* 탭 버튼들 */}
         <div className="flex gap-2 overflow-x-auto w-full pb-3 snap-x [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-stone-950 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-700 hover:[&::-webkit-scrollbar-thumb]:bg-stone-500 transition-colors">
           <button onClick={() => setSelectedTab('all')} className={`snap-start px-4 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${selectedTab === 'all' ? 'bg-amber-600 text-white' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'}`}>전체 ({members.length - blacklistCount})</button>
           <button onClick={() => setSelectedTab('promotions')} className={`snap-start px-4 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${selectedTab === 'promotions' ? 'bg-blue-600 text-white' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'}`}>등업 대상 ({stats.promotionCandidates})</button>
@@ -111,10 +128,8 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
 
       </div>
 
-      {/* 📱 모바일 대응 명단 테이블 (가로 스크롤 & 예쁜 스크롤바 적용) */}
+      {/* 📱 명단 테이블 */}
       <div className="overflow-x-auto relative pb-3 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-stone-950/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-700 hover:[&::-webkit-scrollbar-thumb]:bg-stone-500 transition-colors">
-        
-        {/* 모바일 가이드 그림자 (우측 스크롤이 있음을 암시) */}
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-stone-900 to-transparent pointer-events-none md:hidden z-10"></div>
         
         <table className="w-full min-w-[900px] text-left border-collapse text-sm relative">
@@ -130,7 +145,7 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-800 font-medium text-stone-300">
-            {filteredMembers.map((member) => {
+            {paginatedMembers.map((member) => {
               const daysJoined = getDaysSinceJoined(member.joined_at);
               const daysSincePromotion = getDaysSinceLastPromotion(member.joined_at, member.last_promoted_at);
               
@@ -142,6 +157,9 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
                   <td className="p-3 sm:p-4 pl-4 sm:pl-6">
                     <button onClick={() => setSelectedMember(member)} className="font-bold text-stone-100 hover:text-amber-400 underline decoration-dotted underline-offset-4 text-left flex items-center gap-1.5 group">
                       {member.nickname}
+                      {member.discord_id && (
+                        <span className="bg-[#5865F2] text-white text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider ml-1">DC</span>
+                      )}
                       <FileText className="w-3.5 h-3.5 text-stone-500 group-hover:text-amber-400 transition-colors shrink-0" />
                     </button>
                   </td>
@@ -211,6 +229,47 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
         </table>
         {filteredMembers.length === 0 && <div className="text-center py-16 text-stone-500 font-medium text-sm">일치하는 길드원이 없습니다.</div>}
       </div>
+
+      {/* 📄 하단 페이지네이션 UI */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-stone-950/50 border-t border-stone-800">
+          <p className="text-xs text-stone-500 font-medium">
+            총 <span className="text-stone-300 font-bold">{filteredMembers.length}</span>명 중 <span className="text-stone-300 font-bold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>-
+            <span className="text-stone-300 font-bold">{Math.min(currentPage * ITEMS_PER_PAGE, filteredMembers.length)}</span>명 표시
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 rounded-lg bg-stone-900 border border-stone-800 text-stone-400 hover:text-amber-400 hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex gap-1.5">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${
+                    currentPage === i + 1 
+                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' 
+                      : 'bg-stone-900 border border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 rounded-lg bg-stone-900 border border-stone-800 text-stone-400 hover:text-amber-400 hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {selectedMember && (
         <MemberDetailModal

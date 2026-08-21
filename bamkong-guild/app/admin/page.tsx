@@ -67,8 +67,18 @@ export default function AdminDashboard() {
     return { totalMembers, newThisMonth, promotionCandidates, warningCount, breakCount };
   }, [members]);
 
-  // DB 수정 핸들러
+  // 🛡️ 신규 길드원 DB 추가 핸들러 (중복 검사 포함)
   const handleAddMember = async (newMember: any) => {
+    // 이미 등록된 닉네임인지 확인 (대소문자 무시)
+    const isDuplicate = members.some(
+      (m) => m.nickname.toLowerCase() === newMember.nickname.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert(`'${newMember.nickname}' 님은 이미 등록된 길드원입니다! 🌰`);
+      return;
+    }
+
     try { await addDoc(collection(db, 'members'), newMember); } 
     catch (error) { console.error("등록 에러:", error); }
   };
@@ -98,8 +108,20 @@ export default function AdminDashboard() {
     catch (error) { console.error("경고 수정 에러:", error); }
   };
 
-  // 길드원 정보(메모/휴식/블랙리스트) 업데이트 함수 추가
+  // 🛡️ 길드원 정보 업데이트 핸들러 (닉네임 변경 시 중복 검사 포함)
   const handleUpdateMember = async (id: string, updatedData: Partial<GuildMember>) => {
+    // 닉네임을 변경하려고 할 때만 중복 검사 수행
+    if (updatedData.nickname) {
+      const isDuplicate = members.some(
+        (m) => m.id !== id && m.nickname.toLowerCase() === updatedData.nickname!.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        alert(`'${updatedData.nickname}' 닉네임은 이미 다른 길드원이 사용 중입니다! 🌰`);
+        return;
+      }
+    }
+
     try {
       await updateDoc(doc(db, 'members', id), updatedData);
     } catch (error) {

@@ -4,6 +4,7 @@ export interface GuildMember {
   rank: '새싹' | '밤콩' | '알밤콩' | '명예 밤콩' | '부대장';
   joined_at: string;
   last_promoted_at?: string; // (최근 등업일)
+  discord_id?: string;
   custom_req_days?: number | null;
   warning_count: number;
   is_on_break: boolean;

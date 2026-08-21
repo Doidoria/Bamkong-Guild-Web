@@ -32,6 +32,7 @@ export default function MemberDetailModal({
   const [customReqDays, setCustomReqDays] = useState<number | string>(
     member.custom_req_days ?? "",
   );
+  const [discordId, setDiscordId] = useState(member.discord_id || "");
 
   const handleSave = () => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -40,6 +41,7 @@ export default function MemberDetailModal({
     onSave(member.id, {
       nickname,
       rank,
+      discord_id: discordId,
       custom_req_days: customReqDays !== '' ? Number(customReqDays) : null,
       memo,
       is_on_break: isOnBreak,
@@ -63,9 +65,9 @@ export default function MemberDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-stone-900 border border-stone-800 rounded-[1.5rem] sm:rounded-[2rem] max-w-lg w-full p-5 sm:p-6 md:p-8 shadow-2xl text-stone-200 relative animate-fadeIn max-h-[90vh] overflow-y-auto scrollbar-hide">
-        {/* 닫기 버튼 (모바일에서 화면 밖으로 밀리지 않도록 위치 조정) */}
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-stone-900 border border-stone-800 rounded-[1.5rem] sm:rounded-[2rem] max-w-lg w-full p-5 sm:p-6 md:p-8 shadow-2xl text-stone-200 relative max-h-[90vh] overflow-y-auto scrollbar-hide">
+        {/* 닫기 버튼 */}
         <button
           onClick={onClose}
           className="absolute top-5 right-5 md:top-6 md:right-6 text-stone-500 hover:text-stone-300 transition-colors bg-stone-800/50 p-1.5 rounded-full"
@@ -82,7 +84,7 @@ export default function MemberDetailModal({
 
         <div className="space-y-5 sm:space-y-6">
           {/* ✏️ 닉네임 및 등급 수동 변경 영역 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-stone-400 mb-1.5 sm:mb-2">
                 테런 닉네임
@@ -92,6 +94,17 @@ export default function MemberDetailModal({
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 sm:p-3 text-sm text-stone-100 focus:outline-none font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] sm:text-xs font-bold text-[#5865F2] mb-1.5 sm:mb-2">디스코드 고유 ID</label>
+              <input 
+                type="text" 
+                placeholder="예: 123456789012345678" 
+                value={discordId} 
+                onChange={(e) => setDiscordId(e.target.value)} 
+                className="w-full bg-stone-950 border border-[#5865F2]/30 rounded-xl p-3 text-sm text-stone-100 focus:outline-none focus:ring-1 focus:ring-[#5865F2] font-mono placeholder-stone-700" 
               />
             </div>
 
