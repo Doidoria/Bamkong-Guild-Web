@@ -19,14 +19,13 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
   const [search, setSearch] = useState('');
   const [selectedTab, setSelectedTab] = useState<'all' | 'promotions' | 'warnings' | 'breaks' | 'blacklists'>('all');
   const [selectedMember, setSelectedMember] = useState<GuildMember | null>(null);
-  
-  // 📄 페이지네이션 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterRank, setFilterRank] = useState('전체');
 
-  // 검색어나 탭이 변경되면 항상 1페이지로 돌아가도록 초기화
+  // 검색어, 탭, 등급 필터가 변경되면 항상 1페이지로 돌아가도록 초기화
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedTab]);
+  }, [search, selectedTab, filterRank]);
 
   const handleExportCSV = () => {
     if (members.length === 0) {
@@ -76,6 +75,8 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
     const matchesSearch = m.nickname.toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
 
+    if (filterRank !== '전체' && m.rank !== filterRank) return false;
+
     if (selectedTab === 'blacklists') return m.is_blacklisted;
     if (m.is_blacklisted) return false;
 
@@ -115,8 +116,21 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
         </div>
 
         {/* 검색 및 다운로드 버튼 */}
-        <div className="flex items-center gap-2 sm:gap-3 w-full">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full">
+          <select 
+            value={filterRank} 
+            onChange={(e) => setFilterRank(e.target.value)}
+            className="w-full sm:w-auto px-3 py-3 sm:py-2.5 bg-stone-900 border border-stone-800 text-stone-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-bold cursor-pointer [color-scheme:dark] shrink-0"
+          >
+            <option value="전체">전체 등급</option>
+            <option value="새싹">🌱 새싹</option>
+            <option value="밤콩">🫘 밤콩</option>
+            <option value="알밤콩">🌰 알밤콩</option>
+            <option value="명예 밤콩">👑 명예 밤콩</option>
+            <option value="부대장">⭐ 부대장</option>
+          </select>
+
+          <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input type="text" placeholder="닉네임 검색..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium transition-all" />
           </div>
