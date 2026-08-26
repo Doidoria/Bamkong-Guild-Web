@@ -7,6 +7,7 @@ import HeroSection from './components/HeroSection';
 import InfoCard from './components/InfoCard';
 import CallToAction from './components/CallToAction';
 import GuildSkills from './components/GuildSkills';
+import { Gamepad2, ArrowRight } from 'lucide-react';
 
 export default function BamkongGuildPage() {
   return (
@@ -80,7 +81,7 @@ export default function BamkongGuildPage() {
           <GuildSkills />
 
           {/* 📸 길드 앨범 유도 섹션 */}
-          <section className="max-w-5xl mx-auto px-6 mb-24 relative z-10 text-center flex flex-col items-center">
+          <section className="max-w-5xl mx-auto px-6 mb-36 relative z-10 text-center flex flex-col items-center">
             {/* 3D 책 컨테이너 */}
             <div className="group w-full max-w-[340px] md:max-w-[400px] h-[400px] md:h-[450px] mx-auto [perspective:1200px] cursor-pointer">
               <div className="relative w-full h-full transition-transform duration-1000 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
@@ -125,7 +126,41 @@ export default function BamkongGuildPage() {
               </div>
             </div>
           </section>
+
+          {/* 🎮 주말 타게임 확인 배너 섹션 */}
+          <section className="max-w-5xl mx-auto px-6 mb-10 relative z-10">
+            <div className="relative overflow-hidden bg-gradient-to-r from-amber-800 to-stone-900 rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-amber-700/40 text-white flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="flex items-center gap-5 text-center md:text-left flex-col md:flex-row">
+                <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 text-amber-300 shadow-inner">
+                  <Gamepad2 className="w-10 h-10" />
+                </div>
+                <div>
+                  <div className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black mb-2 border border-amber-400/20">
+                    WEEKEND PLAYZONE
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-black mb-2 text-amber-50">
+                    주말엔 타게임도 다 같이 달려요!
+                  </h3>
+                  <p className="text-stone-300 text-sm md:text-base font-medium break-keep">
+                    스팀 게임, 마피아, 파티 게임 등 길드원들과 함께 즐기는 타게임 목록과 링크를 확인해보세요.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/games"
+                className="group shrink-0 inline-flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 hover:bg-amber-400 text-stone-900 font-black rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                타게임 목록 확인하기
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </section>
+
           <CallToAction />
+
         </main>
 
         <footer className="w-full py-12 text-center text-stone-600 text-sm bg-stone-100/50 mt-10 border-t border-stone-200/50 backdrop-blur-md break-keep">

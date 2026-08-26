@@ -1,3 +1,4 @@
+// app/components/AlbumGallery.tsx
 'use client';
 import React, { useState } from 'react';
 import PhotoModal from './PhotoModal';

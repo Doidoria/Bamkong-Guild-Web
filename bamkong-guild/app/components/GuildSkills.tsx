@@ -7,7 +7,7 @@ export default function GuildSkills() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <section id="skills" className="max-w-5xl mx-auto px-6 mb-16 relative z-10 scroll-mt-50">
+    <section id="skills" className="max-w-5xl mx-auto px-6 mb-36 relative z-10 scroll-mt-50">
       <div className="bg-white/90 border border-amber-200/60 rounded-[2rem] shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
         <button
           onClick={() => setIsOpen(!isOpen)}
