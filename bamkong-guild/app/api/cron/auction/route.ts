@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   // Vercel Cron 보안 헤더 검증 (외부에서 임의 주소로 실행하는 것을 방지)
-//   const authHeader = request.headers.get('authorization');
-//   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-//     return new Response('Unauthorized', { status: 401 });
-//   }
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
 
   // 디스코드 채널 웹후크 URL (Vercel 환경변수에 추가 필요)
   const DISCORD_WEBHOOK_URL = process.env.AUCTION_WEBHOOK_URL;
