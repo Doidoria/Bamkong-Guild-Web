@@ -19,7 +19,7 @@ export default function GuildSkills() {
             </div>
             <div>
               <h3 className="text-xl md:text-2xl font-black text-stone-800">
-                밤콩 길드 스킬 현황 🌰
+                밤콩 길드 스킬 현황
               </h3>
               <p className="text-sm text-stone-500 font-medium mt-1">
                 {isOpen ? '클릭하여 스킬 안내를 접습니다.' : '클릭하여 현재 적용 중인 길드 스킬을 확인해 보세요!'}
