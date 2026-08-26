@@ -27,7 +27,7 @@ const OTHER_GAMES_DATA: OtherGame[] = [
     tags: ['멀티플레이', '건축', '생존'],
     specialBadges: ['주말 오픈', '전용 런처 제공'],
     image: '/images/games/minecraft.jpg',
-    storeUrl: 'https://www.minecraft.net/',
+    storeUrl: 'https://www.minecraft.net/ko-kr/store/minecraft-java-bedrock-edition-pc?tabs=%7B%22details%22%3A0%7D',
   },
   {
     id: 2,
