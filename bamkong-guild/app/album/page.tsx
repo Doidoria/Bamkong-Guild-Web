@@ -36,7 +36,8 @@ export default function AlbumPage() {
             🌰 밤콩들의 따뜻한 기록 🌰
           </h2>
           <p className="text-stone-700 font-medium bg-white/80 inline-block px-6 py-2 rounded-full border border-amber-900/10">
-            사진을 클릭하면 원본 크기로 선명하게 볼 수 있어요!
+            {/* 사진을 클릭하면 원본 크기로 선명하게 볼 수 있어요!  */}
+            <span className="text-red-500">(공사중)</span>
           </p>
         </div>
         
