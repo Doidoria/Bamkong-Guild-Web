@@ -35,7 +35,6 @@ export default function AlbumPage() {
           <h2 className="text-3xl md:text-4xl font-black text-amber-900 mb-4">
             🌰 밤콩들의 따뜻한 기록 🌰
           </h2>
-          {/* 설명 박스: blur 및 shadow 제거, 단순 배경색으로 교체 */}
           <p className="text-stone-700 font-medium bg-white/80 inline-block px-6 py-2 rounded-full border border-amber-900/10">
             사진을 클릭하면 원본 크기로 선명하게 볼 수 있어요!
           </p>
