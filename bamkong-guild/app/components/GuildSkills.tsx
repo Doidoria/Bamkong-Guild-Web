@@ -7,7 +7,7 @@ export default function GuildSkills() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <section id="skills" className="max-w-5xl mx-auto px-6 mb-16 relative z-10 scroll-mt-28">
+    <section id="skills" className="max-w-5xl mx-auto px-6 mb-16 relative z-10 scroll-mt-50">
       <div className="bg-white/90 border border-amber-200/60 rounded-[2rem] shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -43,7 +43,7 @@ export default function GuildSkills() {
               ✨ 밤콩 길드는 길드원 분들의 쾌적한 플레이를 위해 주요 길드 스킬을 지속해서 유지/강화하고 있습니다!
             </p>
             
-            {/* 스킬 이미지 2개 반응형 그리드 배치 (PC: 가로 2열, 모바일: 세로 1열) */}
+            {/* 스킬 이미지 2개 반응형 그리드 배치*/}
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* 첫 번째 이미지 */}
               <div className="rounded-2xl overflow-hidden border border-amber-200/80 shadow-md bg-white p-2 hover:-translate-y-1 transition-transform duration-300">
