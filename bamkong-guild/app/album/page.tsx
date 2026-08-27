@@ -38,7 +38,7 @@ export default function AlbumPage() {
             <img src="/images/밤콩.png" alt="밤콩 도토리" className="w-8 h-8 inline-block mb-4" />
           </h2>
           <p className="text-stone-700 font-medium bg-white/80 inline-block px-6 py-2 rounded-full border border-amber-900/10">
-            <span className="text-red-500">앨범 공사중</span>
+            <span className="text-[#814325]">밤콩들의 '오순도순' 기념적인 사진 앨범들을 모아두는 곳이에요!</span>
           </p>
         </div>
         
