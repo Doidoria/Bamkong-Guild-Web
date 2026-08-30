@@ -1,3 +1,4 @@
+// app/admin/utils.ts
 // 오늘 날짜 기준 가입 경과 일수 계산
 export const getDaysSinceJoined = (joinedAtStr: string) => {
   const today = new Date();

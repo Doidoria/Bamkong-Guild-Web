@@ -48,7 +48,7 @@ export default function GuildSkills() {
               {/* 첫 번째 이미지 */}
               <div className="rounded-2xl overflow-hidden border border-amber-200/80 shadow-md bg-white p-2 hover:-translate-y-1 transition-transform duration-300">
                 <img
-                  src="/images/guild-skills-1.jpg"
+                  src="/images/guild-skills-1.png"
                   alt="밤콩 길드 스킬 현황 1"
                   className="w-full h-auto object-contain rounded-xl"
                 />
@@ -57,7 +57,7 @@ export default function GuildSkills() {
               {/* 두 번째 이미지 */}
               <div className="rounded-2xl overflow-hidden border border-amber-200/80 shadow-md bg-white p-2 hover:-translate-y-1 transition-transform duration-300">
                 <img
-                  src="/images/guild-skills-2.jpg"
+                  src="/images/guild-skills-2.png"
                   alt="밤콩 길드 스킬 현황 2"
                   className="w-full h-auto object-contain rounded-xl"
                 />

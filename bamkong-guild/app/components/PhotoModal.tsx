@@ -1,7 +1,6 @@
 // app/components/PhotoModal.tsx
 'use client';
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PhotoModalProps {
@@ -59,8 +58,7 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
       <div className={`relative max-w-5xl w-full bg-[#faf8f5] rounded-2xl overflow-hidden shadow-xl border border-stone-200/30 flex flex-col transition-all duration-300 ease-out ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-8'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button 
-          onClick={handleClose}
+        <button onClick={handleClose}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 z-40 text-stone-500 hover:text-stone-800 bg-white/90 hover:bg-white p-2.5 rounded-full transition-all shadow-sm hover:rotate-90 hover:scale-110"
         >
           <X className="w-6 h-6" />
@@ -75,15 +73,13 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
                   {currentIndex + 1} / {photo.images.length}
                 </div>
 
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                <button onClick={(e) => { e.stopPropagation(); handlePrev(); }}
                   className="absolute left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/50 hover:bg-white/90 text-stone-700 rounded-full shadow-md backdrop-blur-sm transition-all opacity-0 group-hover/modal:opacity-100 -translate-x-4 group-hover/modal:translate-x-0"
                 >
                   <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
                 </button>
 
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                <button onClick={(e) => { e.stopPropagation(); handleNext(); }}
                   className="absolute right-2 sm:right-4 z-30 p-2 sm:p-3 bg-white/50 hover:bg-white/90 text-stone-700 rounded-full shadow-md backdrop-blur-sm transition-all opacity-0 group-hover/modal:opacity-100 translate-x-4 group-hover/modal:translate-x-0"
                 >
                   <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />

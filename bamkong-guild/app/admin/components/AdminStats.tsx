@@ -1,3 +1,4 @@
+// app/admin/components/AdminStats.tsx
 import React from 'react';
 import { Users, UserPlus, Award, AlertTriangle, Moon } from 'lucide-react';
 import { AdminStatsData } from '../types';

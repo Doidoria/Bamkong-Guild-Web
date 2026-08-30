@@ -1,3 +1,4 @@
+// app/admin/components/AdminMemberTable.tsx
 import React, { useState, useEffect } from 'react';
 import { Search, Clock, CheckCircle2, UserX, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from '../utils';

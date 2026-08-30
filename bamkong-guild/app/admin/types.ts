@@ -1,3 +1,4 @@
+// app/admin/types.ts
 export interface GuildMember {
   id: string;
   nickname: string;

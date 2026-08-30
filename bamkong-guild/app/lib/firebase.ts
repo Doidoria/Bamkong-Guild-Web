@@ -1,7 +1,7 @@
+// app/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-// 아까 2단계에서 복사해둔 본인의 설정값을 아래에 붙여넣으세요!
 const firebaseConfig = {
   apiKey: "AIzaSyDsak0k8TbKFvRowg04P-_ak_yz4tJK14M",
   authDomain: "bamkong-admin-544f6.firebaseapp.com",

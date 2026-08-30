@@ -1,36 +1,63 @@
+// app/admin/page.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { GuildMember } from './types';
+import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from './utils';
+import { Lock, Gamepad2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AdminStats from './components/AdminStats';
 import AdminMemberForm from './components/AdminMemberForm';
 import AdminMemberTable from './components/AdminMemberTable';
-import { GuildMember } from './types';
-import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from './utils';
-import { Lock } from 'lucide-react';
+import { getGameSession } from '../game/actions'; 
 
 export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true); // 권한 검증 로딩 상태 추가
   
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 로그인 핸들러
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === '1117') {
-      setIsAuthenticated(true);
-    } else {
-      alert('비밀번호가 일치하지 않습니다. 🌰');
-      setPasswordInput('');
-    }
-  };
+  const isCheckAttempted = useRef(false);
+
+  // 디스코드 로그인 기반 최고 관리자 검증 로직
+  useEffect(() => {
+    if (isCheckAttempted.current) return;
+    isCheckAttempted.current = true;
+    
+    const verifyAdmin = async () => {
+      try {
+        const user = await getGameSession();
+        const userId = (user as any)?.id; 
+        const ADMIN_UIDS = process.env.NEXT_PUBLIC_ADMIN_UIDS?.split(',') || []; 
+
+        if (!user || !ADMIN_UIDS.includes(userId)) {
+          alert('최고 관리자 권한이 없습니다! 🌰');
+          router.push('/');
+          return;
+        }
+
+        // 검증 통과
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('관리자 권한 확인 에러:', error);
+        router.push('/');
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    verifyAdmin();
+  }, [router]);
 
   // Firebase 실시간 데이터 연동
   useEffect(() => {
-    if (!isAuthenticated) return; // 로그인 전에는 DB를 안 불러옵니다.
+    // 권한 검증이 끝나지 않았으면 DB 호출을 차단합니다.
+    if (!isAuthorized) return; 
 
     const q = query(collection(db, 'members'), orderBy('joined_at', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -43,7 +70,7 @@ export default function AdminDashboard() {
     });
 
     return () => unsubscribe();
-  }, [isAuthenticated]);
+  }, [isAuthorized]);
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -57,7 +84,7 @@ export default function AdminDashboard() {
     const promotionCandidates = members.filter(m => {
       if (m.is_blacklisted) return false;
       const promoInfo = getPromotionInfo(m.rank);
-      if (!promoInfo) return false; // 최고 등급이면 제외
+      if (!promoInfo) return false; 
       const daysSince = getDaysSinceLastPromotion(m.joined_at, m.last_promoted_at);
       return daysSince >= promoInfo.reqDays;
     }).length;
@@ -67,9 +94,7 @@ export default function AdminDashboard() {
     return { totalMembers, newThisMonth, promotionCandidates, warningCount, breakCount };
   }, [members]);
 
-  // 🛡️ 신규 길드원 DB 추가 핸들러 (중복 검사 포함)
   const handleAddMember = async (newMember: any) => {
-    // 이미 등록된 닉네임인지 확인 (대소문자 무시)
     const isDuplicate = members.some(
       (m) => m.nickname.toLowerCase() === newMember.nickname.toLowerCase()
     );
@@ -88,15 +113,15 @@ export default function AdminDashboard() {
     if (!member) return;
 
     const promoInfo = getPromotionInfo(member.rank);
-    if (!promoInfo) return; // 더 이상 승급할 수 없는 경우 방지
+    if (!promoInfo) return; 
 
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       const memberRef = doc(db, 'members', id);
       await updateDoc(memberRef, {
-        rank: promoInfo.nextRank, // 자동으로 다음 등급
+        rank: promoInfo.nextRank, 
         promotion_status: '등업 완료',
-        last_promoted_at: todayStr // 최근 등업일 갱신
+        last_promoted_at: todayStr 
       });
     } catch (error) {
       console.error("등업 에러:", error);
@@ -108,9 +133,7 @@ export default function AdminDashboard() {
     catch (error) { console.error("경고 수정 에러:", error); }
   };
 
-  // 🛡️ 길드원 정보 업데이트 핸들러 (닉네임 변경 시 중복 검사 포함)
   const handleUpdateMember = async (id: string, updatedData: Partial<GuildMember>) => {
-    // 닉네임을 변경하려고 할 때만 중복 검사 수행
     if (updatedData.nickname) {
       const isDuplicate = members.some(
         (m) => m.id !== id && m.nickname.toLowerCase() === updatedData.nickname!.toLowerCase()
@@ -137,36 +160,17 @@ export default function AdminDashboard() {
     }
   };
 
-  // 로그인 화면 UI
-  if (!isAuthenticated) {
+  // ⏳ 권한 검증 및 데이터 로딩 화면
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center font-sans px-4">
-        <div className="bg-stone-900 border border-stone-800 p-8 sm:p-10 rounded-[2rem] shadow-2xl shadow-black/50 max-w-sm w-full flex flex-col items-center">
-          <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-6 border border-amber-500/20">
-            <Lock className="w-8 h-8" />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-stone-100 mb-2">관리자 로그인</h1>
-          <p className="text-xs sm:text-sm text-stone-400 mb-8 text-center">밤콩 길드 대시보드 접근 권한이 필요합니다.</p>
-          <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
-            <input 
-              type="password" 
-              placeholder="비밀번호 입력" 
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              className="w-full bg-stone-950 border border-stone-800 text-center text-stone-100 placeholder-stone-600 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              autoFocus
-            />
-            <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-amber-900/20">
-              접속하기
-            </button>
-          </form>
+      <div className="min-h-screen bg-stone-950 flex flex-col items-center justify-center font-sans">
+        <Lock className="w-8 h-8 text-amber-500 mb-4 animate-pulse" />
+        <div className="font-black text-amber-500 text-lg sm:text-xl">
+          관리자 권한을 확인하는 중입니다... 🌰
         </div>
       </div>
     );
   }
-
-  // ⏳ 로딩 화면
-  if (loading) return <div className="min-h-screen bg-stone-950 flex items-center justify-center font-black text-amber-500 text-lg sm:text-xl">데이터를 불러오는 중입니다... 🌰</div>;
 
   // 💻 메인 대시보드 UI (다크 모드)
   return (
@@ -181,6 +185,14 @@ export default function AdminDashboard() {
               길드원 가입일, 등업 조건, 경고 및 휴식 현황을 효율적으로 관리하세요.
             </p>
           </div>
+
+          <Link
+            href="/admin/game"
+            className="group shrink-0 flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold rounded-xl border border-amber-500/20 transition-all shadow-sm"
+          >
+            <Gamepad2 className="w-5 h-5 group-hover:scale-110 group-hover:rotate-12 transition-all" />
+            게임 관리자 센터로 이동
+          </Link>
         </div>
 
         <AdminStats stats={stats} />

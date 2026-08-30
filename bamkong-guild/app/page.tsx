@@ -2,6 +2,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./api/auth/[...nextauth]/route";
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import InfoCard from './components/InfoCard';
@@ -9,7 +11,11 @@ import CallToAction from './components/CallToAction';
 import GuildSkills from './components/GuildSkills';
 import { Gamepad2, ArrowRight } from 'lucide-react';
 
-export default function BamkongGuildPage() {
+export default async function BamkongGuildPage() {
+  const session = await getServerSession(authOptions);
+  const isAuthenticated = !!session;
+  const isMember = !!(session?.user as any)?.isBamkongMember;
+
   return (
     <div className="min-h-screen font-sans selection:bg-amber-200 overflow-x-hidden relative">
       <div className="fixed inset-0 -z-20 bg-[url('/images/bg-mobile.jpg')] md:bg-[url('/images/bg-main.jpg')] bg-cover bg-top"></div>
@@ -19,7 +25,7 @@ export default function BamkongGuildPage() {
       <div className="relative z-10">
         <Header />
         <main>
-          <HeroSection />
+          <HeroSection isAuthenticated={isAuthenticated} isMember={isMember} />
           <section className="relative max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
             <div id="about" className="absolute -top-[110px]"></div>
             <InfoCard 
