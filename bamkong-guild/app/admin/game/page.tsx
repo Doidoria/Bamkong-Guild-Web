@@ -8,6 +8,8 @@ import { Shield, Zap, FastForward, RotateCcw, RefreshCw, Trash2, UserX } from 'l
 
 interface BamkongUser {
   id: string;
+  name?: string;           // NextAuth 기본 닉네임
+  guildNickname?: string;  // 길드 서버 별명
   globalName: string;
   level: number;
   exp: number;
@@ -133,7 +135,9 @@ export default function AdminGameDashboard() {
                 ) : (
                   users.map((user) => (
                     <tr key={user.id} className="hover:bg-white/50 transition-colors">
-                      <td className="p-5 font-bold">{user.globalName}</td>
+                      <td className="p-5 font-bold text-stone-800">
+                        {user.guildNickname || user.name || user.globalName || '알 수 없음'}
+                      </td>
                       <td className="p-5 text-center">
                         <span className="text-amber-600 font-black">Lv.{user.level}</span> <span className="text-xs text-stone-400">({user.exp}%)</span>
                       </td>
@@ -156,7 +160,7 @@ export default function AdminGameDashboard() {
                         
                         {/* 1레벨 초기화 버튼 */}
                         <button 
-                          onClick={() => handleHardReset(user.id, user.globalName)} 
+                          onClick={() => handleHardReset(user.id, user.guildNickname || user.name || user.id)} 
                           className="p-2 bg-orange-50 text-orange-500 hover:bg-orange-100 hover:text-orange-600 rounded-lg shadow-sm tooltip transition-colors" 
                           title="데이터 초기화 (Lv.1로 강등)"
                         >
@@ -165,7 +169,7 @@ export default function AdminGameDashboard() {
 
                         {/* 데이터 완전 삭제 버튼 */}
                         <button 
-                          onClick={() => handleDeleteUser(user.id, user.globalName)} 
+                          onClick={() => handleDeleteUser(user.id, user.guildNickname || user.name || user.id)} 
                           className="p-2 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-lg shadow-sm tooltip transition-colors" 
                           title="데이터 영구 삭제 (DB에서 제거)"
                         >
