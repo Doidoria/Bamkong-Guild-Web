@@ -39,9 +39,14 @@ function RouletteGame({ onPlay, hasPlayedToday }: MinigameProps) {
     
     const extraSpins = 360 * 5; 
     const sectionAngle = 360 / sections.length;
-    const targetRotation = extraSpins + (360 - (randomIndex * sectionAngle));
+    
+    // ✨ FIX 1: 섹션의 중앙(30도)이 12시 포인터를 향하도록 -30도 보정
+    const baseRotation = extraSpins + (360 - (randomIndex * sectionAngle)) - 30;
+    
+    // ✨ FIX 2: 칸 경계선에 걸치지 않도록 안전한 범위(-20도 ~ +20도) 내에서 랜덤 오차 부여
+    const randomOffset = Math.floor(Math.random() * 40) - 20;
 
-    setRotation((prev) => prev + targetRotation + Math.floor(Math.random() * 30));
+    setRotation((prev) => prev + baseRotation + randomOffset);
 
     setTimeout(() => {
       setIsSpinning(false);

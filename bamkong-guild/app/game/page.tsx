@@ -302,7 +302,6 @@ export default function GamePage() {
           >
             {/* 모달 헤더 */}
             <div className="relative bg-gradient-to-r from-amber-400 to-orange-400 p-6 text-center">
-              {/* ✨ X 버튼 클릭 영역 확대 및 z-index 상향 */}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
