@@ -9,8 +9,8 @@ const ALBUM_DATA = [
   { id: 2, images: ['/images/albumgallery/album-2.png', '/images/albumgallery/album-2-sub.png'], title: '팜에서 오순도순 기념 사진', date: '2026.08.26', desc: '프리즈마 지크 레이드 완료 후 사진!' },
   { id: 3, images: ['/images/albumgallery/album-3.png'], title: '새벽 수다 타임', date: '2026.08.24', desc: '잠 안 오는 런너들의 소소한 모임 🌙' },
   { id: 4, images: ['/images/albumgallery/album-4.png'], title: '지크로니움 레이드', date: '2026.08.30', desc: '새로운 런너님들을 위해 매일 같이 뛰어드려요!' },
-  { id: 5, images: ['/images/albumgallery/album-5.png', '/images/albumgallery/album-5-sub.png'], title: '하드코어 클리어', date: '2026.08.00', desc: '몇 번의 도전 끝에 드디어 깼다 ㅠㅠ' },
-  { id: 6, images: ['/images/albumgallery/album-6.png', '/images/albumgallery/album-6-sub.png'], title: '비공정 낚시 단체샷', date: '2026.08.00', desc: '드디어 대물 낚은 날 🎣' },
+  { id: 5, images: ['/images/albumgallery/album-5.png', '/images/albumgallery/album-5-sub.png'], title: '밤콩 키우기 게임', date: '2026.08.30', desc: '밤콩 길드만의 키우기 게임 출시! Lv.100 달성 시 상품까지?!' },
+  { id: 6, images: ['/images/albumgallery/album-6.png', '/images/albumgallery/album-6-sub.png'], title: '비공정 낚시 단체샷', date: '2026.09.30', desc: '드디어 대물 낚은 날 🎣' },
 ];
 
 export default function AlbumGallery() {
