@@ -32,7 +32,7 @@ export default function AlbumPage() {
 
       <main className="pt-32 pb-24 px-6 max-w-5xl mx-auto min-h-screen relative z-10">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-3xl font-black mb-4">
+          <h2 className="text-2xl md:text-3xl font-black mb-4">
             <img src="/images/밤콩.png" alt="밤콩 도토리" className="w-8 h-8 inline-block mr-3 mb-4" />
             <span className="text-[#814325] mr-3">밤콩들의 따뜻한 기록</span>
             <img src="/images/밤콩.png" alt="밤콩 도토리" className="w-8 h-8 inline-block mb-4" />

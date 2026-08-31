@@ -82,7 +82,7 @@ export default function Leaderboard() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-1 custom-scrollbar flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto p-1 pr-2 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-stone-100/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-amber-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-amber-400 transition-colors">
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center text-stone-400 font-bold animate-pulse">
             랭킹을 불러오는 중...
@@ -95,7 +95,7 @@ export default function Leaderboard() {
           rankers.map((ranker, idx) => (
             <div 
               key={ranker.id} 
-              className={`flex items-center justify-between p-4 rounded-xl border transition-all ${getRankStyle(idx)}`}
+              className={`flex items-center justify-between p-3 rounded-xl border transition-all ${getRankStyle(idx)}`}
             >
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-8">
