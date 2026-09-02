@@ -2,16 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import PhotoModal from './PhotoModal';
-
-// 실제 추가하실 앨범 데이터 목록입니다.
-const ALBUM_DATA = [
-  { id: 1, images: ['/images/albumgallery/album-1.png', '/images/albumgallery/album-1-sub.png'], title: '길퀘 마치고 기념 사진', date: '2026.08.22', desc: '다 같이 모여서 옹기종기 스샷 찍은 날!' },
-  { id: 2, images: ['/images/albumgallery/album-2.png', '/images/albumgallery/album-2-sub.png'], title: '팜에서 오순도순 기념 사진', date: '2026.08.26', desc: '프리즈마 지크 레이드 완료 후 사진!' },
-  { id: 3, images: ['/images/albumgallery/album-3.png'], title: '새벽 수다 타임', date: '2026.08.24', desc: '잠 안 오는 런너들의 소소한 모임 🌙' },
-  { id: 4, images: ['/images/albumgallery/album-4.png'], title: '지크로니움 레이드', date: '2026.08.30', desc: '새로운 런너님들을 위해 매일 같이 뛰어드려요!' },
-  { id: 5, images: ['/images/albumgallery/album-5.png', '/images/albumgallery/album-5-sub.png'], title: '밤콩 키우기 게임', date: '2026.08.30', desc: '밤콩 길드만의 키우기 게임 출시! Lv.100 달성 시 상품까지?!' },
-  { id: 6, images: ['/images/albumgallery/album-6.png', '/images/albumgallery/album-6-sub.png'], title: '비공정 낚시 단체샷', date: '2026.09.30', desc: '드디어 대물 낚은 날 🎣' },
-];
+import { ALBUM_DATA } from '../album/data/albumData';
 
 export default function AlbumGallery() {
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
@@ -42,6 +33,7 @@ export default function AlbumGallery() {
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 
+                {/* 2장 이상일 경우 우측 상단 배지 */}
                 {photo.images.length > 1 && (
                   <div className="absolute top-2 right-2 z-30 bg-black/60 text-white/90 text-[11px] font-bold px-2 py-1 rounded-md backdrop-blur-sm border border-white/20">
                     +{photo.images.length - 1}
