@@ -8,7 +8,8 @@ export const ALBUM_DATA = [
     desc: '다 같이 모여서 옹기종기 스샷 찍은 날!',
     images: [
       '/images/albumgallery/album-1.png', 
-      '/images/albumgallery/album-1-sub.png'
+      '/images/albumgallery/album-1-sub.png',
+      '/images/albumgallery/album-1-sub2.png'
     ], 
   },
   { 
@@ -17,14 +18,13 @@ export const ALBUM_DATA = [
     date: '2026.08.26', 
     desc: '프리즈마 지크 레이드 완료 후 사진!',
     images: [
-      '/images/albumgallery/album-2.png', 
-      '/images/albumgallery/album-2-sub.png'
+      '/images/albumgallery/album-2.png'
     ], 
   },
   { 
     id: 3, 
     title: '새벽 노가리 타임', 
-    date: '2026.08.24', 
+    date: '2026.08.28', 
     desc: '잠 안 오는 런너들의 소소한 모임 🌙',
     images: [
       '/images/albumgallery/album-3.png',

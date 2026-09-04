@@ -89,8 +89,6 @@ export default async function BamkongGuildPage() {
 
           <AlbumBook />
 
-          
-
           {/* 🎮 주말 타게임 확인 배너 섹션 */}
           <section className="max-w-5xl mx-auto px-6 mb-10 relative z-10">
             <div className="relative overflow-hidden bg-gradient-to-r from-amber-800 to-stone-900 rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-amber-700/40 text-white flex flex-col md:flex-row items-center justify-between gap-8">
