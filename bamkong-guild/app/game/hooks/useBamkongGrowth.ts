@@ -55,16 +55,26 @@ export function useBamkongGrowth() {
           setLevel(data.level || 1);
           setExp(data.exp || 0);
 
-          const isNicknameChanged = data.guildNickname !== user.guildNickname;
+          const sessionNickname = user.guildNickname;
+          const dbNickname = data.guildNickname;
+          
+          // 과거 세션이라 닉네임이 null로 들어오면 멀쩡한 DB를 덮어씌우지 않도록 방어
+          const hasValidNickname = sessionNickname !== null && sessionNickname !== undefined;
+          const isNicknameChanged = hasValidNickname && dbNickname !== sessionNickname;
+          
           const isNameChanged = data.name !== user.name;
           const isImageChanged = data.image !== user.image;
 
           if (isNicknameChanged || isNameChanged || isImageChanged) {
-            await setDoc(userRef, {
+            const updateData: any = {
               name: user.name,
               image: user.image,
-              guildNickname: user.guildNickname || null
-            }, { merge: true });
+            };
+            // 유효한 별명이 있을 때만 덮어씌움
+            if (hasValidNickname) {
+              updateData.guildNickname = sessionNickname;
+            }
+            await setDoc(userRef, updateData, { merge: true });
           }
 
           let currentAP = data.ap ?? MAX_AP;
