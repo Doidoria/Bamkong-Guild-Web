@@ -55,6 +55,18 @@ export function useBamkongGrowth() {
           setLevel(data.level || 1);
           setExp(data.exp || 0);
 
+          const isNicknameChanged = data.guildNickname !== user.guildNickname;
+          const isNameChanged = data.name !== user.name;
+          const isImageChanged = data.image !== user.image;
+
+          if (isNicknameChanged || isNameChanged || isImageChanged) {
+            await setDoc(userRef, {
+              name: user.name,
+              image: user.image,
+              guildNickname: user.guildNickname || null
+            }, { merge: true });
+          }
+
           let currentAP = data.ap ?? MAX_AP;
           let lastTime = data.lastActionTime ? data.lastActionTime.toDate() : new Date();
           
