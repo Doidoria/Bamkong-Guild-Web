@@ -34,7 +34,7 @@ export default async function BamkongGuildPage() {
               theme="light"
               items={[
                 <><span className="block font-bold text-stone-800 mb-0.5">길드 퀘스트</span> 100% 자유 참여 (밤 10시 고정!)</>,
-                <><span className="block font-bold text-stone-800 mb-0.5">길드 점령전</span> 자유롭게 참여 가능</>,
+                <><span className="block font-bold text-stone-800 mb-0.5">길드 점령전</span> 자유롭게 참여 가능 (투표)</>,
                 <><span className="block font-bold text-stone-800 mb-0.5">비공정 낚시</span> 사전 공지 후 투표로 유연하게 진행</>,
                 <><span className="block font-bold text-stone-800 mb-0.5">주력 맵</span> 이벤트 & 미션 위주 (하코, 8인, 협동 등 모두 환영)</>
               ]}
@@ -43,17 +43,17 @@ export default async function BamkongGuildPage() {
               title="가입 조건"
               theme="light"
               items={[
-                <><span className="block font-bold text-stone-800 mb-0.5">나이 및 성별</span> 05 ~ 93년생 성인 (남성은 군필 또는 면제자)</>,
+                <><span className="block font-bold text-stone-800 mb-0.5">나이 및 성별</span> 05 ~ 95년생 성인 (남성은 군필 또는 면제자)</>,
                 <>
                   <span className="block font-bold text-stone-800 mb-0.5">레벨 조건</span> 
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-50 rounded-md border border-amber-300 mr-1 align-text-bottom relative">
+                    <Image src="/images/갤럭시윙.png" alt="갤럭시윙" fill className="object-contain p-0.5" sizes="24px" />
+                  </span>
+                  갤럭시윙 이상,<span> </span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-50 rounded-md border border-amber-300 mr-1 align-text-bottom relative">
                     <Image src="/images/스텔라윙.png" alt="스텔라윙" fill className="object-contain p-0.5" sizes="24px" />
                   </span>
-                  스텔라윙 이상,<span> </span>
-                  <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-50 rounded-md border border-amber-300 mr-1 align-text-bottom relative">
-                    <Image src="/images/쏠라윙.png" alt="쏠라윙" fill className="object-contain p-0.5" sizes="24px" />
-                  </span>
-                  쏠라윙 이상은 문의 시 고려
+                  스텔라윙 이상은 문의 시 고려
                 </>,
                 <><span className="block font-bold text-stone-800 mb-0.5">소통 수단</span> 디코 필수 / 마이크 자유 (고음질 TTS 상시 대기 🎙️)</>,
                 <><span className="block font-bold text-stone-800 mb-0.5">마인드</span> 혼자 게임하기 심심해서 소소하게 달리고 싶으신 분</>

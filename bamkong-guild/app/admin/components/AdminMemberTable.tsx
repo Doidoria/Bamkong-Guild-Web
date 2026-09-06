@@ -1,8 +1,9 @@
 // app/admin/components/AdminMemberTable.tsx
-import React, { useState, useEffect } from 'react';
-import { Search, Clock, CheckCircle2, UserX, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Clock, CheckCircle2, UserX, FileText, Download, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from '../utils';
 import { GuildMember, AdminStatsData } from '../types';
+import { toast } from 'sonner';
 import MemberDetailModal from './MemberDetailModal';
 
 interface Props {
@@ -16,21 +17,47 @@ interface Props {
 
 const ITEMS_PER_PAGE = 10; // 한 페이지당 보여줄 길드원 수
 
+const RANK_WEIGHT: Record<GuildMember['rank'], number> = {
+  '부대장': 5,
+  '명예 밤콩': 4,
+  '알밤콩': 3,
+  '밤콩': 2,
+  '새싹': 1
+};
+type SortOption = 'joinDesc' | 'joinAsc' | 'rankDesc' | 'rankAsc';
+
 export default function AdminMemberTable({ members, stats, onPromote, onWarningChange, onUpdateMember, onDeleteMember }: Props) {
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedTab, setSelectedTab] = useState<'all' | 'promotions' | 'warnings' | 'breaks' | 'blacklists'>('all');
   const [selectedMember, setSelectedMember] = useState<GuildMember | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterRank, setFilterRank] = useState('전체');
+  const [sortBy, setSortBy] = useState<SortOption>('joinDesc');
 
-  // 검색어, 탭, 등급 필터가 변경되면 항상 1페이지로 돌아가도록 초기화
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedTab, filterRank]);
+  }, [debouncedSearch, selectedTab, filterRank, sortBy]);
+
+  const rankCounts = useMemo(() => {
+    return members.reduce((acc, member) => {
+      if (!member.is_blacklisted) {
+        acc[member.rank] = (acc[member.rank] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  }, [members]);
 
   const handleExportCSV = () => {
     if (members.length === 0) {
-      alert('백업할 길드원 데이터가 없습니다. 🌰');
+      toast.error('백업할 길드원 데이터가 없습니다. 🌰');
       return;
     }
 
@@ -70,29 +97,48 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success(`길드원 명단 백업 완료!`);
   };
 
-  const filteredMembers = members.filter((m) => {
-    const matchesSearch = m.nickname.toLowerCase().includes(search.toLowerCase());
-    if (!matchesSearch) return false;
+  const filteredAndSortedMembers = useMemo(() => {
+    let result = members.filter((m) => {
+      const matchesSearch = m.nickname.toLowerCase().includes(debouncedSearch.toLowerCase());
+      if (!matchesSearch) return false;
+      if (filterRank !== '전체' && m.rank !== filterRank) return false;
+      if (selectedTab === 'blacklists') return m.is_blacklisted;
+      if (m.is_blacklisted) return false;
+      if (selectedTab === 'promotions') {
+        const promoInfo = getPromotionInfo(m.rank, m.custom_req_days);
+        return promoInfo && getDaysSinceLastPromotion(m.joined_at, m.last_promoted_at) >= promoInfo.reqDays;
+      }
+      if (selectedTab === 'warnings') return m.warning_count >= 2;
+      if (selectedTab === 'breaks') return m.is_on_break;
+      return true;
+    });
 
-    if (filterRank !== '전체' && m.rank !== filterRank) return false;
+    // 정렬 로직
+    result.sort((a, b) => {
+      const dateA = new Date(a.joined_at).getTime();
+      const dateB = new Date(b.joined_at).getTime();
+      const rankA = RANK_WEIGHT[a.rank] || 0;
+      const rankB = RANK_WEIGHT[b.rank] || 0;
 
-    if (selectedTab === 'blacklists') return m.is_blacklisted;
-    if (m.is_blacklisted) return false;
+      switch (sortBy) {
+        case 'joinDesc': return dateB - dateA;
+        case 'joinAsc': return dateA - dateB;
+        case 'rankDesc': return rankB - rankA;
+        case 'rankAsc': return rankA - rankB;
+        default: return 0;
+      }
+    });
 
-    if (selectedTab === 'promotions') {
-      const promoInfo = getPromotionInfo(m.rank, m.custom_req_days);
-      return promoInfo && getDaysSinceLastPromotion(m.joined_at, m.last_promoted_at) >= promoInfo.reqDays;
-    }
-    if (selectedTab === 'warnings') return m.warning_count >= 2;
-    if (selectedTab === 'breaks') return m.is_on_break;
-    return true;
-  });
+    return result;
+  }, [members, debouncedSearch, filterRank, selectedTab, sortBy]);
+
 
   // 📄 페이지네이션 계산 로직
-  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
-  const paginatedMembers = filteredMembers.slice(
+  const totalPages = Math.ceil(filteredAndSortedMembers.length / ITEMS_PER_PAGE);
+  const paginatedMembers = filteredAndSortedMembers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -123,17 +169,31 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
             onChange={(e) => setFilterRank(e.target.value)}
             className="w-full sm:w-auto px-3 py-3 sm:py-2.5 bg-stone-900 border border-stone-800 text-stone-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-bold cursor-pointer [color-scheme:dark] shrink-0"
           >
-            <option value="전체">전체 등급</option>
-            <option value="새싹">🌱 새싹</option>
-            <option value="밤콩">🫘 밤콩</option>
-            <option value="알밤콩">🌰 알밤콩</option>
-            <option value="명예 밤콩">👑 명예 밤콩</option>
-            <option value="부대장">⭐ 부대장</option>
+            <option value="전체">전체 등급 ({members.length - blacklistCount})</option>
+            <option value="새싹">🌱 새싹 ({rankCounts['새싹'] || 0})</option>
+            <option value="밤콩">🫘 밤콩 ({rankCounts['밤콩'] || 0})</option>
+            <option value="알밤콩">🌰 알밤콩 ({rankCounts['알밤콩'] || 0})</option>
+            <option value="명예 밤콩">👑 명예 밤콩 ({rankCounts['명예 밤콩'] || 0})</option>
+            <option value="부대장">⭐ 부대장 ({rankCounts['부대장'] || 0})</option>
           </select>
+
+          <div className="relative w-full sm:w-auto shrink-0">
+            <ArrowUpDown className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="w-full sm:w-auto pl-9 pr-3 py-3 sm:py-2.5 bg-stone-900 border border-stone-800 text-stone-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-bold cursor-pointer [color-scheme:dark]"
+            >
+              <option value="joinDesc">가입일 (최신순)</option>
+              <option value="joinAsc">가입일 (오래된순)</option>
+              <option value="rankDesc">등급 (높은순)</option>
+              <option value="rankAsc">등급 (낮은순)</option>
+            </select>
+          </div>
 
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input type="text" placeholder="닉네임 검색..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium transition-all" />
+            <input type="text" placeholder="닉네임 검색..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-medium transition-all" />
           </div>
           <button onClick={handleExportCSV} title="CSV 다운로드" className="px-4 py-3 sm:py-2.5 bg-stone-800 hover:bg-emerald-600/20 text-stone-300 hover:text-emerald-400 border border-stone-700 hover:border-emerald-500/40 rounded-xl text-sm sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0">
             <Download className="w-4 h-4" />
@@ -242,15 +302,15 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
             })}
           </tbody>
         </table>
-        {filteredMembers.length === 0 && <div className="text-center py-16 text-stone-500 font-medium text-sm">일치하는 길드원이 없습니다.</div>}
+        {filteredAndSortedMembers.length === 0 && <div className="text-center py-16 text-stone-500 font-medium text-sm">일치하는 길드원이 없습니다.</div>}
       </div>
 
       {/* 📄 하단 페이지네이션 UI */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-stone-950/50 border-t border-stone-800">
           <p className="text-xs text-stone-500 font-medium">
-            총 <span className="text-stone-300 font-bold">{filteredMembers.length}</span>명 중 <span className="text-stone-300 font-bold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>-
-            <span className="text-stone-300 font-bold">{Math.min(currentPage * ITEMS_PER_PAGE, filteredMembers.length)}</span>명 표시
+            총 <span className="text-stone-300 font-bold">{filteredAndSortedMembers.length}</span>명 중 <span className="text-stone-300 font-bold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>-
+            <span className="text-stone-300 font-bold">{Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedMembers.length)}</span>명 표시
           </p>
           <div className="flex items-center gap-2">
             <button

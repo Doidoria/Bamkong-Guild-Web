@@ -1,6 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Jua } from 'next/font/google';
+import { Toaster } from 'sonner';
 import "./globals.css";
 
 const juaFont = Jua({ 
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="ko" className="scroll-smooth" data-scroll-behavior="smooth">
       <body className={`${juaFont.className} antialiased text-stone-800`}>
         {children}
+        <Toaster position="bottom-right" theme="dark" richColors />
       </body>
     </html>
   );

@@ -2,8 +2,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShieldAlert, Save, Moon, UserX, Trash2 } from "lucide-react";
+import { X, Save, Moon, UserX, Trash2 } from "lucide-react";
 import { GuildMember } from "../types";
+import { toast } from 'sonner';
 
 interface Props {
   member: GuildMember;
@@ -51,6 +52,7 @@ export default function MemberDetailModal({
       ...(isRankChanged && { last_promoted_at: todayStr }),
     });
     onClose();
+    toast.success(`${nickname}님의 정보가 성공적으로 저장되었습니다.`);
   };
 
   const handleDelete = () => {
@@ -61,6 +63,7 @@ export default function MemberDetailModal({
     ) {
       onDelete(member.id);
       onClose();
+      toast.error(`${member.nickname}님의 데이터가 삭제되었습니다.`);
     }
   };
 

@@ -18,7 +18,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [authLoading, setAuthLoading] = useState(true); // 권한 검증 로딩 상태 추가
-  
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
 
