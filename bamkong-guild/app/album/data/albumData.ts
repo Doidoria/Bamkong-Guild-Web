@@ -61,32 +61,34 @@ export const ALBUM_DATA = [
   },
   { 
     id: 7, 
-    title: '길드 점령전', 
-    date: '2026.09.05', 
-    desc: '밤콩 길드원들과 신나는 즐겜 점령전!',
+    title: '타게임 팟 (마크)', 
+    date: '2026.09.03', 
+    desc: '힐링하며 탐험하는 밤콩 길드원들',
     images: [
-      '/images/albumgallery/album-7.png', 
-      '/images/albumgallery/album-7-sub.png'
+      '/images/albumgallery/album-8.png', 
+      '/images/albumgallery/album-8-sub.png', 
+      '/images/albumgallery/album-8-sub2.png',
+      '/images/albumgallery/album-8-sub3.png'
     ], 
   },
   { 
     id: 8, 
-    title: '주말 타게임 팟 (마크)', 
-    date: '2026.08.30', 
-    desc: '힐링하며 탐험하는 밤콩 길드원들',
+    title: '장시간 테런 & 노가리', 
+    date: '2026.09.06', 
+    desc: '주말 오랜시간 동안 테런 달리기와 수다중',
     images: [
-      '/images/albumgallery/album-8.png', 
-      '/images/albumgallery/album-8-sub1.png', 
-      '/images/albumgallery/album-8-sub2.png'
+      '/images/albumgallery/album-7.png',
+      '/images/albumgallery/album-7-sub.png'
     ], 
   },
   { 
     id: 9, 
-    title: '하드코어 단체 완주', 
-    date: '2026.10.12', 
-    desc: '수십 번의 도전 끝에 드디어 다 같이 깼다 ㅠㅠ',
+    title: '길드 점령전', 
+    date: '2026.09.12', 
+    desc: '밤콩 길드원들과 신나는 즐겜 점령전!',
     images: [
-      '/images/albumgallery/album-9.png'
+      '/images/albumgallery/album-9.png', 
+      '/images/albumgallery/album-9-sub.png'
     ], 
   },
   { 
