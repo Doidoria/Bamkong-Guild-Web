@@ -89,8 +89,8 @@ export default async function BamkongGuildPage() {
               theme="dark"
               items={[
                 <span className="text-lg">소소하게 즐기는 런너님 <span className="text-amber-300 font-semibold">(뉴비/복귀 대환영!)</span></span>,
-                <span className="text-lg">혼자 게임하기 심심해서 따뜻한 소속감이 필요하신 분</span>,
-                <span className="text-lg">다양한 이벤트를 즐기고 배려심 넘치시는 분</span>,
+                <span className="text-lg">배려심이 넘치고 넘쳐 흘러 넘치는 분들</span>,
+                <span className="text-lg">다양한 이벤트를 즐기고 두루두루 플레이 즐겨하시는 분</span>,
                 <span className="text-lg">너무 테런에 몰두하지 않고 타겜도 즐겨하시는 분</span>
               ]}
             />
@@ -102,7 +102,7 @@ export default async function BamkongGuildPage() {
                 <span className="text-stone-900 font-bold text-lg">여미새, 남미새 및 과도한 친목 요구</span>,
                 <span className="text-stone-900 font-bold text-lg">과한 욕설, 선 넘는 발언 및 채팅 매너 불량</span>,
                 <span className="text-stone-900 font-bold text-lg">활동이 너무 적거나 길드원과 소통 노력이 전혀 없으신 분</span>,
-                <span className="text-stone-900 font-bold text-lg">테진(테런에 진심), 뉴비 과도하게 괴롭히는 고인물</span>
+                <span className="text-stone-900 font-bold text-lg">테미<span className="text-amber-800 font-semibold">(테런에 진심으로 미침)</span>, 뉴비 과도하게 괴롭히는 고인물</span>
               ]}
             />
           </section>

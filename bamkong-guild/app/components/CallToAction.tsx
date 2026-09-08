@@ -7,7 +7,11 @@ export default function CallToAction() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const formText = "닉네임 / 접속시간대(00~24시) / 나이 / 성별(남성 : 군필여부) / 레벨";
+  const formText = `닉네임 : 
+접속시간대(00~24시) : 
+나이 : 
+성별(남성 : 군필여부) : 
+레벨 : `;
   const kakaoLink = "https://open.kakao.com/o/ssd2leIi";
 
   const handleCopyAndEnter = async () => {
@@ -79,7 +83,7 @@ export default function CallToAction() {
 
             {/* 양식 텍스트 박스 */}
             <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mb-6">
-              <p className="text-[13px] md:text-[14px] font-bold text-amber-900 leading-relaxed break-keep text-center">
+              <p className="text-[13px] md:text-[14px] font-bold text-amber-900 leading-relaxed break-keep text-left whitespace-pre-line">
                 {formText}
               </p>
             </div>
