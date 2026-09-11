@@ -1,13 +1,13 @@
 // app/game/hooks/useBamkongGrowth.ts
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { getGameSession } from '../actions';
 
 interface UserData {
   id: string;
-  name: string;        // NextAuth 기본 닉네임
-  image: string;       // NextAuth 기본 프로필 (전체 URL로 들어옴)
+  name: string;
+  image: string;
   guildNickname?: string;
   isBamkongMember?: boolean;
 }
@@ -17,16 +17,20 @@ export function useBamkongGrowth() {
   const [level, setLevel] = useState(1);
   const [exp, setExp] = useState(0);
   const [ap, setAp] = useState(3);
+  
+  // 🟢 신규 상태: 게임 포인트와 인벤토리(가구 박스 등)
+  const [gamePoints, setGamePoints] = useState(0);
+  const [inventory, setInventory] = useState<string[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
-  
-  // 실시간 남은 충전 시간(초)을 저장하는 상태
   const [timeUntilNextAp, setTimeUntilNextAp] = useState<number>(0); 
-
-  // 미니게임을 플레이했는지 확인하는 상태
-  const [playedGames, setPlayedGames] = useState({ roulette: false, dice: false, card: false });
+  const [playedGames, setPlayedGames] = useState({ roulette: false, dice: false, card: false, acorn: false });
+  const [isEvolved, setIsEvolved] = useState(false);
+  const [evolutionId, setEvolutionId] = useState<number | null>(null);
   
-  const maxExp = 100; 
-  const MAX_LEVEL = 100;
+  // 🟢 100레벨 이상일 경우 필요 경험치 2배 (100 -> 200)
+  const maxExp = level >= 100 ? 200 : 100; 
+  const MAX_LEVEL = 200;
   const MAX_AP = 15;
   const RECHARGE_MS = 10 * 60 * 1000;
 
@@ -45,8 +49,6 @@ export function useBamkongGrowth() {
         }
         
         setUser(user);
-
-        // ✨ user.id 부분의 타입 에러를 방지하기 위해 단언(!)을 사용합니다.
         const userRef = doc(db, 'bamkong_growth', user.id!);
         const docSnap = await getDoc(userRef);
 
@@ -54,26 +56,23 @@ export function useBamkongGrowth() {
           const data = docSnap.data();
           setLevel(data.level || 1);
           setExp(data.exp || 0);
+          setIsEvolved(data.isEvolved || false);
+          setEvolutionId(data.evolutionId || null);
+          
+          // 게임 포인트 및 인벤토리 로드
+          setGamePoints(data.gamePoints || 0);
+          setInventory(data.inventory || []);
 
           const sessionNickname = user.guildNickname;
           const dbNickname = data.guildNickname;
-          
-          // 과거 세션이라 닉네임이 null로 들어오면 멀쩡한 DB를 덮어씌우지 않도록 방어
           const hasValidNickname = sessionNickname !== null && sessionNickname !== undefined;
           const isNicknameChanged = hasValidNickname && dbNickname !== sessionNickname;
-          
           const isNameChanged = data.name !== user.name;
           const isImageChanged = data.image !== user.image;
 
           if (isNicknameChanged || isNameChanged || isImageChanged) {
-            const updateData: any = {
-              name: user.name,
-              image: user.image,
-            };
-            // 유효한 별명이 있을 때만 덮어씌움
-            if (hasValidNickname) {
-              updateData.guildNickname = sessionNickname;
-            }
+            const updateData: any = { name: user.name, image: user.image };
+            if (hasValidNickname) updateData.guildNickname = sessionNickname;
             await setDoc(userRef, updateData, { merge: true });
           }
 
@@ -84,7 +83,6 @@ export function useBamkongGrowth() {
             const now = new Date();
             const diffMs = now.getTime() - lastTime.getTime();
             const recharged = Math.floor(diffMs / RECHARGE_MS);
-            
             if (recharged > 0) {
               currentAP = Math.min(MAX_AP, currentAP + recharged);
               const remainder = diffMs % RECHARGE_MS;
@@ -92,7 +90,6 @@ export function useBamkongGrowth() {
             }
           }
 
-          // 1일 1회 제한: 마지막 미니게임 플레이 날짜 체크
           if (data.playedGamesTime) {
             const now = new Date();
             const checkToday = (timestamp: any) => {
@@ -109,6 +106,7 @@ export function useBamkongGrowth() {
               roulette: checkToday(data.playedGamesTime.roulette),
               dice: checkToday(data.playedGamesTime.dice),
               card: checkToday(data.playedGamesTime.card),
+              acorn: checkToday(data.playedGamesTime.acorn),
             });
           }
           
@@ -117,8 +115,8 @@ export function useBamkongGrowth() {
         } else {
           await setDoc(userRef, { 
             level: 1, exp: 0, ap: MAX_AP, lastActionTime: new Date(),
-            name: user.name, 
-            image: user.image,
+            gamePoints: 0, inventory: [],
+            name: user.name, image: user.image,
             guildNickname: user.guildNickname || null
           });
         }
@@ -132,18 +130,14 @@ export function useBamkongGrowth() {
     initializeGame();
   }, []);
 
-  // 1초마다 남은 시간을 계산하는 실시간 타이머 로직
   useEffect(() => {
     if (ap >= MAX_AP || isLoading) {
       setTimeUntilNextAp(0);
       return;
     }
-
     const updateTimer = () => {
       const now = new Date().getTime();
       const diffMs = now - lastActionRef.current.getTime();
-      
-      // 혹시라도 그 사이에 1시간이 지났다면 프론트 단에서 조기 충전 처리
       if (diffMs >= RECHARGE_MS) {
         const recharged = Math.floor(diffMs / RECHARGE_MS);
         setAp((prev) => Math.min(MAX_AP, prev + recharged));
@@ -151,14 +145,10 @@ export function useBamkongGrowth() {
         lastActionRef.current = new Date(now - remainder);
         return;
       }
-      
-      // 남은 시간(초) 계산
       setTimeUntilNextAp(Math.ceil((RECHARGE_MS - diffMs) / 1000));
     };
-
-    updateTimer(); // 즉시 1회 실행
-    const intervalId = setInterval(updateTimer, 1000); // 1초마다 반복
-
+    updateTimer(); 
+    const intervalId = setInterval(updateTimer, 1000); 
     return () => clearInterval(intervalId);
   }, [ap, isLoading]);
 
@@ -167,12 +157,8 @@ export function useBamkongGrowth() {
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
       await setDoc(userRef, { 
-        level: newLevel, 
-        exp: newExp, 
-        ap: newAp, 
-        lastActionTime: actionTime,
-        name: user.name, 
-        image: user.image,
+        level: newLevel, exp: newExp, ap: newAp, 
+        lastActionTime: actionTime, name: user.name, image: user.image,
         guildNickname: user.guildNickname || null
       }, { merge: true });
     } catch (error) {
@@ -180,7 +166,7 @@ export function useBamkongGrowth() {
     }
   }, [user]);
 
-  const gainExp = useCallback((amount: number, cost: number) => {
+  const gainExp = useCallback(async (amount: number, cost: number) => {
     if (!user) {
       alert('로그인이 필요합니다!');
       window.location.href = '/api/auth/discord';
@@ -194,47 +180,132 @@ export function useBamkongGrowth() {
     let nextAp = ap - cost;
     let nextExp = exp + amount;
     let nextLevel = level;
+    let earnedBox = false;
 
-    if (nextExp >= maxExp) {
+    // 현재 레벨에 따른 maxExp 적용
+    const currentMaxExp = level >= 100 ? 200 : 100;
+
+    if (nextExp >= currentMaxExp) {
       nextLevel = Math.min(MAX_LEVEL, level + 1);
-      nextExp = nextLevel === MAX_LEVEL ? 0 : nextExp - maxExp;
+      nextExp = nextLevel === MAX_LEVEL ? 0 : nextExp - currentMaxExp;
       setLevel(nextLevel);
+      
+      // 110레벨 이상, 10단위 레벨업 시 랜덤 가구 박스 획득
+      if (nextLevel >= 110 && nextLevel % 10 === 0) {
+        earnedBox = true;
+        setInventory(prev => [...prev, 'random_box_01']);
+      }
     }
     
     setExp(nextExp);
     setAp(nextAp);
     
-    if (ap === MAX_AP) {
-      lastActionRef.current = now;
-    }
+    if (ap === MAX_AP) lastActionRef.current = now;
 
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      syncToDatabase(nextLevel, nextExp, nextAp, lastActionRef.current);
+    debounceTimer.current = setTimeout(async () => {
+      await syncToDatabase(nextLevel, nextExp, nextAp, lastActionRef.current);
+      // DB에 인벤토리 추가 동기화
+      if (earnedBox) {
+        const userRef = doc(db, 'bamkong_growth', user.id);
+        await setDoc(userRef, { inventory: arrayUnion('random_box_01') }, { merge: true });
+      }
     }, 1000);
 
     return true;
   }, [level, exp, ap, user, syncToDatabase]);
 
-  // 기존 초기화, 충전 함수 유지
+  // 미니게임 보상을 게임 포인트(Game Point)로 변경
+  const handleMinigamePlay = useCallback(async (gameId: 'roulette'|'dice'|'card'|'acorn', rewardPoints: number) => {
+    if (!user) return;
+    if (playedGames[gameId]) {
+      alert('오늘 이미 해당 미니게임에 참여하셨습니다! 내일 다시 도전해 주세요.');
+      return;
+    }
+
+    const now = new Date();
+    setPlayedGames((prev) => ({ ...prev, [gameId]: true })); 
+
+    let nextPoints = gamePoints;
+    if (rewardPoints > 0) {
+      nextPoints = gamePoints + rewardPoints;
+      setGamePoints(nextPoints);
+    }
+
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      await setDoc(userRef, { 
+        gamePoints: nextPoints, 
+        playedGamesTime: { [gameId]: now }
+      }, { merge: true });
+    } catch (error) {
+      console.error('미니게임 결과 저장 실패:', error);
+    }
+  }, [user, gamePoints, playedGames]);
+
+  // 상점 구매 로직
+  const spendGamePoints = useCallback(async (cost: number, itemId?: string, isApPotion?: boolean) => {
+    if (!user || gamePoints < cost) return false;
+
+    const nextPoints = gamePoints - cost;
+    setGamePoints(nextPoints);
+
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      const updateData: any = { gamePoints: nextPoints };
+      
+      if (isApPotion) {
+        const nextAp = Math.min(MAX_AP, ap + 5);
+        setAp(nextAp);
+        updateData.ap = nextAp;
+      }
+      
+      await setDoc(userRef, updateData, { merge: true });
+      return true;
+    } catch (error) {
+      console.error('아이템 구매 실패:', error);
+      return false;
+    }
+  }, [user, gamePoints, ap]);
+
+  const saveEvolution = useCallback(async (evolutionId: number) => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      await setDoc(userRef, { isEvolved: true, evolutionId: evolutionId }, { merge: true });
+    } catch (error) {
+      console.error('진화 캐릭터 저장 실패:', error);
+    }
+  }, [user]);
+
+  // 테스트용: 게임 초기화
   const resetGame = useCallback(async () => {
     if (!user) return;
     setLevel(1);
     setExp(0);
     setAp(MAX_AP);
+    setIsEvolved(false);
+    setEvolutionId(null);
+    setGamePoints(0);
+    setInventory([]);
+    
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
-      await setDoc(userRef, { level: 1, exp: 0, ap: MAX_AP, lastActionTime: new Date() }, { merge: true });
-      alert('🛠️ 테스트: 1레벨로 초기화되었습니다!');
+      await setDoc(userRef, { 
+        level: 1, exp: 0, ap: MAX_AP, lastActionTime: new Date(),
+        isEvolved: false, evolutionId: null, gamePoints: 0, inventory: []
+      }, { merge: true });
+      alert('🛠️ 테스트: 1레벨 및 상점 내역 초기화 완료!');
     } catch (error) {
       console.error('초기화 실패:', error);
     }
   }, [user]);
 
+  // 테스트용: 행동력 충전
   const fillAp = useCallback(async () => {
     if (!user) return;
     setAp(MAX_AP);
-    lastActionRef.current = new Date(); // 충전 기준 시간 리셋
+    lastActionRef.current = new Date();
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
       await setDoc(userRef, { ap: MAX_AP, lastActionTime: new Date() }, { merge: true });
@@ -243,7 +314,7 @@ export function useBamkongGrowth() {
     }
   }, [user]);
 
-  // [테스트용] 레벨 +10 (10업) 함수
+  // 테스트용: 레벨 +10업
   const levelUpTen = useCallback(async () => {
     if (!user) return;
     const nextLevel = Math.min(MAX_LEVEL, level + 9);
@@ -256,44 +327,12 @@ export function useBamkongGrowth() {
     }
   }, [level, user]);
 
-  // 미니게임 처리 함수
-  const handleMinigamePlay = useCallback(async (gameId: 'roulette'|'dice'|'card', reward: number) => {
-    if (!user) return;
-    if (playedGames[gameId]) {
-      alert('오늘 이미 해당 미니게임에 참여하셨습니다! 내일 다시 도전해 주세요.');
-      return;
-    }
-
-    const now = new Date();
-    setPlayedGames((prev) => ({ ...prev, [gameId]: true })); 
-
-    let nextAp = ap;
-    if (reward > 0) {
-      nextAp = Math.min(MAX_AP, ap + reward);
-      setAp(nextAp);
-    }
-
-    try {
-      const userRef = doc(db, 'bamkong_growth', user.id);
-      await setDoc(userRef, { 
-        ap: nextAp, 
-        playedGamesTime: {
-          [gameId]: now
-        }
-      }, { merge: true });
-      
-    } catch (error) {
-      console.error('미니게임 결과 저장 실패:', error);
-    }
-  }, [user, ap, MAX_AP, playedGames]);
-
-  // [테스트용] 미니게임 횟수 완전 초기화 함수
+  // 테스트용: 미니게임 횟수 초기화
   const resetMinigameStatus = useCallback(async () => {
     if (!user) return;
-    setPlayedGames({ roulette: false, dice: false, card: false });
+    setPlayedGames({ roulette: false, dice: false, card: false, acorn: false });
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
-      // DB의 기록 자체를 빈 객체로 덮어씌워 완전 초기화
       await setDoc(userRef, { playedGamesTime: {} }, { merge: true });
       alert('🛠️ 테스트: 미니게임 플레이 횟수가 초기화되었습니다!');
     } catch (error) {
@@ -303,7 +342,9 @@ export function useBamkongGrowth() {
 
   return { 
     user, level, exp, maxExp, ap, MAX_AP, isLoading, timeUntilNextAp, 
+    gamePoints, inventory, spendGamePoints,
     gainExp, resetGame, fillAp, levelUpTen, 
-    playedGames, handleMinigamePlay, resetMinigameStatus
+    playedGames, handleMinigamePlay, resetMinigameStatus,
+    saveEvolution, isEvolved, evolutionId
   };
 }

@@ -1,9 +1,10 @@
+// app/admin/game/page.tsx
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore'; 
 import { db } from '@/app/lib/firebase';
-import { Shield, Zap, FastForward, RotateCcw, RefreshCw, Trash2, UserX, Search, ArrowUpDown, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Shield, Zap, Pencil, RotateCcw, RefreshCw, Trash2, UserX, Search, ArrowUpDown, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -104,11 +105,36 @@ export default function AdminGameDashboard() {
     fetchUsers();
   };
 
-  const handleLevelUp = async (userId: string, currentLevel: number) => {
-    const nextLevel = Math.min(100, currentLevel + 10);
-    await setDoc(doc(db, 'bamkong_growth', userId), { level: nextLevel }, { merge: true });
-    toast.success('해당 유저의 레벨이 10 상승했습니다.');
-    fetchUsers();
+  // 100레벨 미만 설정 시 진화 데이터도 함께 지우는 로직 추가
+  const handleEditLevel = async (userId: string, currentLevel: number, userName: string) => {
+    const input = window.prompt(`[${userName}]님의 변경할 레벨을 입력하세요 (1~200):`, String(currentLevel));
+    
+    if (input === null || input.trim() === '') return; 
+    
+    const newLevel = parseInt(input, 10);
+    
+    if (isNaN(newLevel) || newLevel < 1 || newLevel > 200) {
+      toast.error('1에서 200 사이의 유효한 숫자를 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 업데이트할 데이터 객체 생성
+      const updateData: any = { level: newLevel };
+      
+      // 레벨이 100 미만으로 떨어지면 진화 상태 강제 초기화
+      if (newLevel < 100) {
+        updateData.isEvolved = false;
+        updateData.evolutionId = null;
+      }
+
+      await setDoc(doc(db, 'bamkong_growth', userId), updateData, { merge: true });
+      toast.success(`[${userName}]님의 레벨이 ${newLevel}(으)로 변경되었습니다.`);
+      fetchUsers();
+    } catch (error) {
+      console.error('레벨 업데이트 실패:', error);
+      toast.error('레벨을 변경하는 중 오류가 발생했습니다.');
+    }
   };
 
   const handleResetMinigames = async (userId: string) => {
@@ -117,6 +143,7 @@ export default function AdminGameDashboard() {
     fetchUsers();
   };
 
+  // 초기화 시 진화 데이터 리셋 로직
   const handleHardReset = async (userId: string, userName: string) => {
     const isConfirmed = window.confirm(`⚠️ 경고: [${userName}]님의 모든 게임 데이터(레벨, 경험치, 행동력)를 삭제하고 1레벨로 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
     
@@ -125,7 +152,9 @@ export default function AdminGameDashboard() {
         level: 1, 
         exp: 0, 
         ap: 0, 
-        playedGamesTime: {} 
+        playedGamesTime: {},
+        isEvolved: false,
+        evolutionId: null
       }, { merge: true });
       toast.success(`[${userName}]님의 데이터가 완전히 초기화되었습니다.`);
       fetchUsers();
@@ -250,8 +279,9 @@ export default function AdminGameDashboard() {
                         <button onClick={() => handleFillAp(user.id)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg shadow-sm tooltip transition-colors" title="AP 풀충전">
                           <Zap className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleLevelUp(user.id, user.level)} className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg shadow-sm tooltip transition-colors" title="강제 10업">
-                          <FastForward className="w-4 h-4" />
+                        <button onClick={() => handleEditLevel(user.id, user.level, user.guildNickname || user.name || user.globalName || '알 수 없음')} 
+                          className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg shadow-sm tooltip transition-colors" title="레벨 직접 설정">
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleResetMinigames(user.id)} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg shadow-sm tooltip transition-colors" title="미니게임 횟수 초기화">
                           <RotateCcw className="w-4 h-4" />
