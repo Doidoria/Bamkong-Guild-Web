@@ -64,8 +64,8 @@ export default function GamePage() {
     prevLevelRef.current = level;
   }, [level, isLoading]);
 
-  const handleAction = (type: 'water'|'sun'|'fertilizer', amount: number, cost: number) => {
-    if (gainExp(amount, cost)) {
+  const handleAction = async (type: 'water'|'sun'|'fertilizer', amount: number, cost: number) => {
+    if (await gainExp(amount, cost)) {
       setActionType(type);
       setTimeout(() => setActionType('none'), 1500); 
     }
