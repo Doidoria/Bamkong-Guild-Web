@@ -1,3 +1,4 @@
+// app/minigames/page.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Gamepad2, Sparkles, Dices, Layers, Zap } from 'lucide-react';

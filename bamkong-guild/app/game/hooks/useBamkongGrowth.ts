@@ -182,7 +182,6 @@ export function useBamkongGrowth() {
     let nextLevel = level;
     let earnedBox = false;
 
-    // 현재 레벨에 따른 maxExp 적용
     const currentMaxExp = level >= 100 ? 200 : 100;
 
     if (nextExp >= currentMaxExp) {
@@ -190,7 +189,6 @@ export function useBamkongGrowth() {
       nextExp = nextLevel === MAX_LEVEL ? 0 : nextExp - currentMaxExp;
       setLevel(nextLevel);
       
-      // 110레벨 이상, 10단위 레벨업 시 랜덤 가구 박스 획득
       if (nextLevel >= 110 && nextLevel % 10 === 0) {
         earnedBox = true;
         setInventory(prev => [...prev, 'random_box_01']);
@@ -200,23 +198,35 @@ export function useBamkongGrowth() {
     setExp(nextExp);
     setAp(nextAp);
     
-    if (ap === MAX_AP) lastActionRef.current = now;
+    if (ap === MAX_AP) {
+      lastActionRef.current = now;
+    }
 
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(async () => {
-      await syncToDatabase(nextLevel, nextExp, nextAp, lastActionRef.current);
-      // DB에 인벤토리 추가 동기화
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      const updatePayload: any = { 
+        level: nextLevel, 
+        exp: nextExp, 
+        ap: nextAp, 
+        lastActionTime: lastActionRef.current 
+      };
       if (earnedBox) {
-        const userRef = doc(db, 'bamkong_growth', user.id);
-        await setDoc(userRef, { inventory: arrayUnion('random_box_01') }, { merge: true });
+        updatePayload.inventory = arrayUnion('random_box_01');
       }
-    }, 1000);
+      await setDoc(userRef, updatePayload, { merge: true });
+    } catch (error) {
+      console.error('DB 즉시 저장 실패:', error);
+    }
 
     return true;
-  }, [level, exp, ap, user, syncToDatabase]);
+  }, [level, exp, ap, user]);
 
-  // 미니게임 보상을 게임 포인트(Game Point)로 변경
-  const handleMinigamePlay = useCallback(async (gameId: 'roulette'|'dice'|'card'|'acorn', rewardPoints: number) => {
+  // 미니게임 보상을 게임
+  const handleMinigamePlay = useCallback(async (
+    gameId: 'roulette'|'dice'|'card'|'acorn', 
+    rewardAmount: number,
+    rewardType: 'ap' | 'point' = 'ap' // 기본값은 기존 게임들을 위해 'ap'로 설정
+  ) => {
     if (!user) return;
     if (playedGames[gameId]) {
       alert('오늘 이미 해당 미니게임에 참여하셨습니다! 내일 다시 도전해 주세요.');
@@ -226,22 +236,28 @@ export function useBamkongGrowth() {
     const now = new Date();
     setPlayedGames((prev) => ({ ...prev, [gameId]: true })); 
 
-    let nextPoints = gamePoints;
-    if (rewardPoints > 0) {
-      nextPoints = gamePoints + rewardPoints;
+    let updatePayload: any = {
+      [`playedGamesTime.${gameId}`]: now
+    };
+
+    // 타입에 따라 지급 재화 분기 처리
+    if (rewardType === 'point') {
+      const nextPoints = gamePoints + rewardAmount;
       setGamePoints(nextPoints);
+      updatePayload.gamePoints = nextPoints;
+    } else {
+      const nextAp = Math.min(MAX_AP, ap + rewardAmount);
+      setAp(nextAp);
+      updatePayload.ap = nextAp;
     }
 
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
-      await setDoc(userRef, { 
-        gamePoints: nextPoints, 
-        playedGamesTime: { [gameId]: now }
-      }, { merge: true });
+      await setDoc(userRef, updatePayload, { merge: true });
     } catch (error) {
       console.error('미니게임 결과 저장 실패:', error);
     }
-  }, [user, gamePoints, playedGames]);
+  }, [user, gamePoints, ap, playedGames, MAX_AP]);
 
   // 상점 구매 로직
   const spendGamePoints = useCallback(async (cost: number, itemId?: string, isApPotion?: boolean) => {

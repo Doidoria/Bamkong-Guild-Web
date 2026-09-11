@@ -9,6 +9,7 @@ import { db } from '@/app/lib/firebase';
 import { useBamkongGrowth } from '../hooks/useBamkongGrowth';
 import { INVENTORY_ITEMS, InventoryItem } from './constants/inventory';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import IsometricItem from './components/IsometricItem';
 import RoamingCharacter from './components/RoamingCharacter';
@@ -144,7 +145,7 @@ export default function BamkongRoomPage() {
     const unownedItems = INVENTORY_ITEMS.filter(item => !ownedItems.includes(item.id));
 
     if (unownedItems.length === 0) {
-      alert('🎉 모든 가구를 다 모으셨습니다! (올클리어 대체 보상 준비 중)');
+      toast('모든 가구와 아이템을 다 모으셨습니다! 🎉');
       return;
     }
 
@@ -232,7 +233,7 @@ export default function BamkongRoomPage() {
     
     setUnlockedSkins(allSkins);
     await setDoc(doc(db, 'bamkong_rooms', user.id), { unlockedSkins: allSkins }, { merge: true });
-    alert('✨ 모든 외형(1~10번)이 성공적으로 해금되었습니다!');
+    toast.success('모든 외형(1~10번)이 성공적으로 해금되었습니다! ✨');
   };
 
   // 관리자용: 외형 강제 초기화 함수 (기본 진화형 1개로 롤백)
@@ -245,7 +246,7 @@ export default function BamkongRoomPage() {
       unlockedSkins: [evolutionId], 
       equippedSkin: evolutionId 
     }, { merge: true });
-    alert('🔄 외형이 기본 진화형으로 초기화되었습니다.');
+    toast.info('외형이 기본 진화형으로 초기화되었습니다. 🔄');
   };
 
   const handlePositionChange = (id: string, newX: number, newY: number) => {
@@ -262,10 +263,10 @@ export default function BamkongRoomPage() {
       const roomDocRef = doc(db, 'bamkong_rooms', user.id);
       await setDoc(roomDocRef, { placedItems }, { merge: true });
       
-      alert('밤콩이의 방이 예쁘게 저장되었습니다! 🌰');
+      toast.success('밤콩이의 방이 예쁘게 저장되었습니다! 🌰');
     } catch (error) {
       console.error('방 저장 실패:', error);
-      alert('저장에 실패했어요. 다시 시도해 주세요.');
+      toast.error('방 저장에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setIsSaving(false);
     }
