@@ -21,6 +21,15 @@ export default function RoamingCharacter({ level, isEvolved, evolutionId, userNa
   const requestRef = useRef<number | null>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const isInsideIsometricFloor = (x: number, y: number) => {
+    const centerX = 50; 
+    const centerY = 70;
+    const widthRatio = 40;  
+    const heightRatio = 20; 
+    
+    return (Math.abs(x - centerX) / widthRatio) + (Math.abs(y - centerY) / heightRatio) <= 1;
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = true; };
     const handleKeyUp = (e: KeyboardEvent) => { keys.current[e.key.toLowerCase()] = false; };
@@ -40,8 +49,10 @@ export default function RoamingCharacter({ level, isEvolved, evolutionId, userNa
         if (keys.current['a']) { newX -= speed; moved = true; setIsFlipped(true); }
         if (keys.current['d']) { newX += speed; moved = true; setIsFlipped(false); }
 
-        newX = Math.max(20, Math.min(newX, 80));
-        newY = Math.max(30, Math.min(newY, 85));
+        if (!isInsideIsometricFloor(newX, newY)) {
+          newX = prev.x;
+          newY = prev.y;
+        }
 
         setIsWalking(moved);
         return { x: newX, y: newY };
@@ -88,7 +99,7 @@ export default function RoamingCharacter({ level, isEvolved, evolutionId, userNa
       style={{ 
         left: `${position.x}%`, 
         top: `${position.y}%`,
-        zIndex: Math.floor(position.y),
+        zIndex: 99999,
         transform: 'translate(-50%, -100%)' 
       }}
     >

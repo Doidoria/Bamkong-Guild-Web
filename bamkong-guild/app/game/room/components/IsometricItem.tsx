@@ -22,7 +22,19 @@ export default function IsometricItem({
   sizeClass = 'w-32', isLightSource, isNight, onPositionChange, onInteract
 }: IsometricItemProps) {
   const isDragging = useRef(false);
-  const calculatedZIndex = baseZIndex !== undefined ? baseZIndex : Math.floor(yPos);
+  const calculatedZIndex = baseZIndex !== undefined ? baseZIndex : Math.floor(yPos * 100);
+
+  const clampToIsometricFloor = (targetX: number, targetY: number) => {
+    const centerX = 50; 
+    const centerY = 70;
+    const widthRatio = 40;
+    const heightRatio = 20;
+
+    if ((Math.abs(targetX - centerX) / widthRatio) + (Math.abs(targetY - centerY) / heightRatio) <= 1) {
+      return { x: targetX, y: targetY };
+    }
+    return { x: 50, y: 70 }; // 영역 밖으로 드래그 시 방 중앙으로 리셋
+  };
 
   // 밤일 때 빛나는 효과 조건부 적용
   const glowClass = isNight && isLightSource 
@@ -49,12 +61,12 @@ export default function IsometricItem({
         const SENSITIVITY = 0.4; // 취향에 따라 0.2 ~ 0.5 사이로 조절해 보세요.
         const percentX = (info.offset.x / window.innerWidth) * 100 * SENSITIVITY;
         const percentY = (info.offset.y / window.innerHeight) * 100 * SENSITIVITY;
-        let newX = xPos + percentX;
-        let newY = yPos + percentY;
-        newX = Math.max(5, Math.min(newX, 95));
-        newY = Math.max(20, Math.min(newY, 90)); // Y축은 바닥 영역을 고려해 하한/상한선 지정
+        const rawNewX = xPos + percentX;
+        const rawNewY = yPos + percentY;
 
-        onPositionChange(id, newX, newY);
+        const { x: finalX, y: finalY } = clampToIsometricFloor(rawNewX, rawNewY);
+
+        onPositionChange(id, finalX, finalY);
       }}
       // 드래그 중일 때 붕 떠오르는 애니메이션
       whileDrag={{ scale: 1.1, zIndex: 100, cursor: 'grabbing' }}

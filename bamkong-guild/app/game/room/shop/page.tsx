@@ -10,15 +10,15 @@ const AP_ITEMS = [
   { id: 'ap_1', name: '한 모금 드링크', ap: 1, cost: 100, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-900/50' },
   { id: 'ap_2', name: '작은 드링크', ap: 2, cost: 200, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-900/50' },
   { id: 'ap_3', name: '일반 드링크', ap: 3, cost: 300, color: 'from-blue-600 to-indigo-600', shadow: 'shadow-blue-900/50' },
-  { id: 'ap_5', name: '큰 드링크', ap: 5, cost: 480, color: 'from-indigo-500 to-purple-600', shadow: 'shadow-indigo-900/50' },
-  { id: 'ap_10', name: '메가 드링크', ap: 10, cost: 900, color: 'from-purple-600 to-fuchsia-600', shadow: 'shadow-purple-900/50' },
-  { id: 'ap_15', name: '기적의 엘릭서', ap: 15, cost: 1300, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-900/50' },
+  { id: 'ap_5', name: '큰 드링크', ap: 5, cost: 490, color: 'from-indigo-500 to-purple-600', shadow: 'shadow-indigo-900/50' },
+  { id: 'ap_10', name: '메가 드링크', ap: 10, cost: 980, color: 'from-purple-600 to-fuchsia-600', shadow: 'shadow-purple-900/50' },
+  { id: 'ap_15', name: '기적의 엘릭서', ap: 15, cost: 1450, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-900/50' },
 ];
 
 const SKIN_ITEMS = Array.from({ length: 8 }, (_, i) => ({
   id: `final-${i + 1}`,
   name: `스페셜 외형 ${i + 1}`,
-  cost: 2500,
+  cost: 5000,
   src: `/images/evolutions/final-${i + 1}.png`
 }));
 

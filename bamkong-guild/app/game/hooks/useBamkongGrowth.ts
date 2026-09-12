@@ -18,17 +18,18 @@ export function useBamkongGrowth() {
   const [exp, setExp] = useState(0);
   const [ap, setAp] = useState(3);
   
-  // 🟢 신규 상태: 게임 포인트와 인벤토리(가구 박스 등)
+  // 신규 상태: 게임 포인트와 인벤토리(가구 박스 등)
   const [gamePoints, setGamePoints] = useState(0);
   const [inventory, setInventory] = useState<string[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [timeUntilNextAp, setTimeUntilNextAp] = useState<number>(0); 
-  const [playedGames, setPlayedGames] = useState({ roulette: false, dice: false, card: false, acorn: false });
+  const [playedGames, setPlayedGames] = useState({ roulette: false, dice: false, card: false });
   const [isEvolved, setIsEvolved] = useState(false);
   const [evolutionId, setEvolutionId] = useState<number | null>(null);
+  const [acornPlays, setAcornPlays] = useState(0);
   
-  // 🟢 100레벨 이상일 경우 필요 경험치 2배 (100 -> 200)
+  // 100레벨 이상일 경우 필요 경험치 2배 (100 -> 200)
   const maxExp = level >= 100 ? 200 : 100; 
   const MAX_LEVEL = 200;
   const MAX_AP = 15;
@@ -70,6 +71,15 @@ export function useBamkongGrowth() {
           const isNameChanged = data.name !== user.name;
           const isImageChanged = data.image !== user.image;
 
+          // 도토리 피하기 일일 횟수 로드
+          const checkTodayCount = (history: any) => {
+            if (!history || !history.date) return 0;
+            const t = new Date();
+            const todayStr = `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
+            return history.date === todayStr ? (history.count || 0) : 0;
+          };
+          setAcornPlays(checkTodayCount(data.acornPlayHistory));
+
           if (isNicknameChanged || isNameChanged || isImageChanged) {
             const updateData: any = { name: user.name, image: user.image };
             if (hasValidNickname) updateData.guildNickname = sessionNickname;
@@ -106,7 +116,6 @@ export function useBamkongGrowth() {
               roulette: checkToday(data.playedGamesTime.roulette),
               dice: checkToday(data.playedGamesTime.dice),
               card: checkToday(data.playedGamesTime.card),
-              acorn: checkToday(data.playedGamesTime.acorn),
             });
           }
           
@@ -223,7 +232,7 @@ export function useBamkongGrowth() {
 
   // 미니게임 보상을 게임
   const handleMinigamePlay = useCallback(async (
-    gameId: 'roulette'|'dice'|'card'|'acorn', 
+    gameId: 'roulette'|'dice'|'card', 
     rewardAmount: number,
     rewardType: 'ap' | 'point' = 'ap' // 기본값은 기존 게임들을 위해 'ap'로 설정
   ) => {
@@ -258,6 +267,30 @@ export function useBamkongGrowth() {
       console.error('미니게임 결과 저장 실패:', error);
     }
   }, [user, gamePoints, ap, playedGames, MAX_AP]);
+
+  // 도토리 피하기 전용 플레이 처리 (하루 5회 제한)
+  const handleAcornPlay = useCallback(async (rewardPoints: number) => {
+    if (!user) return;
+    if (acornPlays >= 5) return;
+    
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const nextPlays = acornPlays + 1;
+    const nextPoints = gamePoints + rewardPoints;
+    
+    setAcornPlays(nextPlays);
+    setGamePoints(nextPoints);
+
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      await setDoc(userRef, { 
+        gamePoints: nextPoints, 
+        acornPlayHistory: { date: todayStr, count: nextPlays } 
+      }, { merge: true });
+    } catch (error) {
+      console.error('도토리 피하기 결과 저장 실패:', error);
+    }
+  }, [user, acornPlays, gamePoints]);
 
   // 상점 구매 로직
   const spendGamePoints = useCallback(async (cost: number, itemType: 'ap' | 'skin', value: number | string) => {
@@ -349,7 +382,7 @@ export function useBamkongGrowth() {
   // 테스트용: 미니게임 횟수 초기화
   const resetMinigameStatus = useCallback(async () => {
     if (!user) return;
-    setPlayedGames({ roulette: false, dice: false, card: false, acorn: false });
+    setPlayedGames({ roulette: false, dice: false, card: false });
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
       await setDoc(userRef, { playedGamesTime: {} }, { merge: true });
@@ -364,6 +397,6 @@ export function useBamkongGrowth() {
     gamePoints, inventory, spendGamePoints,
     gainExp, resetGame, fillAp, levelUpTen, 
     playedGames, handleMinigamePlay, resetMinigameStatus,
-    saveEvolution, isEvolved, evolutionId
+    saveEvolution, isEvolved, evolutionId, acornPlays, handleAcornPlay
   };
 }

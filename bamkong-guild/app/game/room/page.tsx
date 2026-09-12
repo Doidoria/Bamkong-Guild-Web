@@ -300,7 +300,7 @@ export default function BamkongRoomPage() {
 
           <Link 
             href="/game/room/shop"
-            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black py-3 sm:py-3.5 rounded-2xl shadow-[0_4px_15px_rgba(245,158,11,0.3)] hover:shadow-[0_6px_20px_rgba(245,158,11,0.4)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none transition-all duration-200"
+            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black py-3 sm:py-3 rounded-2xl shadow-[0_4px_15px_rgba(245,158,11,0.3)] hover:shadow-[0_6px_20px_rgba(245,158,11,0.4)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none transition-all duration-200"
           >
             <Store className="w-5 h-5 sm:w-5 sm:h-5" />
             <span>포인트 상점</span>
@@ -335,10 +335,10 @@ export default function BamkongRoomPage() {
           <img src="/images/room/isometric-room-bg.jpg" alt="Room Background" className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" />
           <div className={`absolute inset-0 bg-indigo-950/50 mix-blend-multiply pointer-events-none transition-opacity duration-1000 z-0 ${isNight ? 'opacity-100' : 'opacity-0'}`}></div>
           {level >= 110 ? (
-            <Link href="/minigames/acorn-dodge" className="absolute top-[85%] left-[70%] z-20 group cursor-pointer hover:scale-105 transition-transform">
+            <Link href="/game/room/minigames" className="absolute top-[85%] left-[70%] z-20 group cursor-pointer hover:scale-105 transition-transform">
               <img src="/images/room/portal.png" alt="포탈" className="w-24 md:w-32 drop-shadow-[0_0_20px_rgba(167,139,250,0.6)] animate-[pulse_3s_infinite]" />
               <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-black/80 text-white font-bold px-3 py-2 rounded-lg whitespace-nowrap transition-opacity border border-white/20 pointer-events-none flex flex-col items-center gap-1 shadow-lg">
-                <span className="text-sm">미니게임 포탈</span>
+                <span className="text-sm">밤콩 미니게임 포탈</span>
                 <span className="text-xs text-amber-300 font-black">💰 포인트 획득처</span>
               </div>
             </Link>
@@ -380,14 +380,12 @@ export default function BamkongRoomPage() {
                 )
               })}
               
-              <div className="absolute inset-0 z-110 pointer-events-none [&>*]:pointer-events-auto">
-                <RoamingCharacter 
-                  level={level} 
-                  isEvolved={isEvolved} 
-                  evolutionId={currentSkin || evolutionId}
-                  userName={user?.guildNickname || user?.name || '밤콩이'}
-                />
-              </div>
+              <RoamingCharacter 
+                level={level} 
+                isEvolved={isEvolved} 
+                evolutionId={currentSkin || evolutionId}
+                userName={user?.guildNickname || user?.name || '밤콩이'}
+              />
             </div>
           </div>
         </div>
