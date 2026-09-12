@@ -145,28 +145,43 @@ export default function AdminGameDashboard() {
 
   // 초기화 시 진화 데이터 리셋 로직
   const handleHardReset = async (userId: string, userName: string) => {
-    const isConfirmed = window.confirm(`⚠️ 경고: [${userName}]님의 모든 게임 데이터(레벨, 경험치, 행동력)를 삭제하고 1레벨로 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
+    const isConfirmed = window.confirm(`⚠️ 경고: [${userName}]님의 모든 게임 데이터(레벨, 포인트, 방 꾸미기 등)를 삭제하고 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
     
     if (isConfirmed) {
-      await setDoc(doc(db, 'bamkong_growth', userId), { 
-        level: 1, 
-        exp: 0, 
-        ap: 0, 
-        playedGamesTime: {},
-        isEvolved: false,
-        evolutionId: null
-      }, { merge: true });
-      toast.success(`[${userName}]님의 데이터가 완전히 초기화되었습니다.`);
-      fetchUsers();
+      try {
+        // 1. 성장 및 재화 데이터 초기화 (bamkong_growth)
+        await setDoc(doc(db, 'bamkong_growth', userId), { 
+          level: 1, 
+          exp: 0, 
+          ap: MAX_AP, 
+          gamePoints: 0,
+          inventory: [],
+          playedGamesTime: {},
+          acornPlayHistory: {},
+          isEvolved: false,
+          evolutionId: null
+        }, { merge: true });
+
+        // 2. 방 데이터 문서 자체를 삭제 (bamkong_rooms) -> 다음 입장 시 첫 방문 튜토리얼 발생
+        await deleteDoc(doc(db, 'bamkong_rooms', userId));
+
+        toast.success(`[${userName}]님의 모든 데이터가 1레벨(첫 접속 상태)로 초기화되었습니다.`);
+        fetchUsers();
+      } catch (error) {
+        console.error('데이터 초기화 실패:', error);
+        toast.error('초기화 중 오류가 발생했습니다.');
+      }
     }
   };
 
+  // 영구 삭제 시 방 데이터 컬렉션도 함께 지우도록
   const handleDeleteUser = async (userId: string, userName: string) => {
     const isConfirmed = window.confirm(`🚨 치명적 경고: [${userName}]님의 모든 게임 데이터를 DB에서 '완전히 삭제'하시겠습니까?\n이 작업은 절대 복구할 수 없습니다.`);
     
     if (isConfirmed) {
       try {
         await deleteDoc(doc(db, 'bamkong_growth', userId));
+        await deleteDoc(doc(db, 'bamkong_rooms', userId)); // 방 데이터도 함께 날림
         toast.error(`[${userName}]님의 데이터가 영구적으로 삭제되었습니다.`);
         fetchUsers();
       } catch (error) {

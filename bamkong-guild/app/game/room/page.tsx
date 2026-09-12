@@ -33,7 +33,7 @@ export default function BamkongRoomPage() {
   const [rewardItem, setRewardItem] = useState<InventoryItem | null>(null);
   const [claimedLevelRewards, setClaimedLevelRewards] = useState<number[]>([]); // 이미 수령한 레벨 기록
   const [pendingRewardLevel, setPendingRewardLevel] = useState<number | null>(null); // 현재 모달로 까고 있는 상자의 레벨
-  const { user, level, isEvolved, evolutionId } = useBamkongGrowth();
+  const { user, level, isEvolved, evolutionId, handleMinigamePlay } = useBamkongGrowth();
 
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
   const [unlockedSkins, setUnlockedSkins] = useState<number[]>([]); 
@@ -317,6 +317,10 @@ export default function BamkongRoomPage() {
           onSave={syncAdminActionToDB}
           onUnlockAllSkins={handleAdminUnlockAllSkins}
           onResetSkins={handleAdminResetSkins}
+          onGivePoints={() => {
+            handleMinigamePlay('roulette', 10000, 'point'); 
+            alert('10,000 포인트가 지급되었습니다! 새로고침 후 상점을 확인해 보세요.');
+          }}
         />
       )}
       {pendingMilestones.length > 0 && (

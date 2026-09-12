@@ -307,12 +307,20 @@ export function useBamkongGrowth() {
         const nextAp = Math.min(MAX_AP, ap + value);
         setAp(nextAp);
         updateData.ap = nextAp;
+        await setDoc(userRef, updateData, { merge: true });
       } else if (itemType === 'skin' && typeof value === 'string') {
+        // 1. 상점 인벤토리(문자열)에 추가
         setInventory(prev => [...prev, value]);
         updateData.inventory = arrayUnion(value);
+        await setDoc(userRef, updateData, { merge: true });
+
+        // 2. 내 방 옷장(숫자)에도 확실하게 해금 동기화
+        const skinNum = parseInt(value.replace('final-', ''), 10);
+        if (!isNaN(skinNum)) {
+          const roomRef = doc(db, 'bamkong_rooms', user.id);
+          await setDoc(roomRef, { unlockedSkins: arrayUnion(skinNum) }, { merge: true });
+        }
       }
-      
-      await setDoc(userRef, updateData, { merge: true });
       return true;
     } catch (error) {
       console.error('아이템 구매 실패:', error);
@@ -324,7 +332,24 @@ export function useBamkongGrowth() {
     if (!user) return;
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
-      await setDoc(userRef, { isEvolved: true, evolutionId: evolutionId }, { merge: true });
+      const skinIdStr = `final-${evolutionId}`;
+
+      // 1. 상점에서도 '보유중'으로 뜨도록 인벤토리 상태 업데이트
+      setInventory(prev => prev.includes(skinIdStr) ? prev : [...prev, skinIdStr]);
+
+      await setDoc(userRef, { 
+        isEvolved: true, 
+        evolutionId: evolutionId,
+        inventory: arrayUnion(skinIdStr) // DB 인벤토리에 추가
+      }, { merge: true });
+
+      // 2. 내 방 옷장에도 기본 장착 및 해금 처리 명시
+      const roomRef = doc(db, 'bamkong_rooms', user.id);
+      await setDoc(roomRef, { 
+        unlockedSkins: arrayUnion(evolutionId),
+        equippedSkin: evolutionId
+      }, { merge: true });
+
     } catch (error) {
       console.error('진화 캐릭터 저장 실패:', error);
     }

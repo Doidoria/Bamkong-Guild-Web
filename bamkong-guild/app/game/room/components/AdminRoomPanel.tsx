@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldAlert, Unlock, LayoutGrid, Trash2, RotateCcw, X } from 'lucide-react';
+import { Shield, ShieldAlert, Unlock, LayoutGrid, Trash2, RotateCcw, X, Coins } from 'lucide-react';
 import { INVENTORY_ITEMS } from '../constants/inventory';
 
 interface AdminRoomPanelProps {
@@ -14,10 +14,11 @@ interface AdminRoomPanelProps {
   onSave: (newOwned: string[], newPlaced: any[]) => void;
   onUnlockAllSkins?: () => void;
   onResetSkins?: () => void;
+  onGivePoints?: () => void;
 }
 
 export default function AdminRoomPanel({ 
-  ownedItems, setOwnedItems, placedItems, setPlacedItems, onSave, onUnlockAllSkins, onResetSkins
+  ownedItems, setOwnedItems, placedItems, setPlacedItems, onSave, onUnlockAllSkins, onResetSkins, onGivePoints
 }: AdminRoomPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -121,6 +122,20 @@ export default function AdminRoomPanel({
                 <div className="text-left">
                   <p className="font-bold text-sm text-white">전체 가구 회수</p>
                   <p className="text-[10px] text-stone-400">방을 빈 상태로 만듦</p>
+                </div>
+              </button>
+
+              <button onClick={() => {
+                  if (confirm('[관리자 권한] 테스트용 10,000 포인트를 지급하시겠습니까?')) {
+                    onGivePoints?.();
+                  }
+                }} 
+                className="flex items-center gap-3 bg-stone-800 hover:bg-stone-700 text-stone-200 p-3 rounded-xl transition-colors border border-white/5 hover:border-orange-500/30"
+              >
+                <Coins className="w-5 h-5 text-orange-400" />
+                <div className="text-left">
+                  <p className="font-bold text-sm text-white">10,000 P 지급 (테스트)</p>
+                  <p className="text-[10px] text-stone-400">상점 아이템 구매 테스트용</p>
                 </div>
               </button>
 
