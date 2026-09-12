@@ -73,7 +73,7 @@ export default function AdminRoomPanel({
       {/* 관리자 패널 토글 버튼 */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="absolute top-24 left-6 z-[60] flex items-center gap-2 bg-red-600/80 hover:bg-red-500 text-white px-4 py-2 rounded-xl backdrop-blur-md border border-red-400/50 shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all group"
+        className="absolute top-22 left-6 z-[60] flex items-center gap-2 bg-red-600/80 hover:bg-red-500 text-white px-4 py-2 rounded-xl backdrop-blur-md border border-red-400/50 shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all group"
       >
         <ShieldAlert className="w-5 h-5 group-hover:scale-110 transition-transform" />
         <span className="font-bold text-sm">관리자 도구</span>

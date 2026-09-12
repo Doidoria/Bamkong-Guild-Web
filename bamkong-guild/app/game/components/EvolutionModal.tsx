@@ -2,7 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, AlertTriangle } from 'lucide-react'; // 🟢 아이콘 추가
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
 interface EvolutionModalProps {
   isOpen: boolean;
@@ -28,18 +28,18 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
   const [selectedEvolutionId, setSelectedEvolutionId] = useState<number | null>(null);
   const [phase, setPhase] = useState<'idle' | 'evolving' | 'flash' | 'revealed'>('idle');
   
-  // 🟢 실수 방지용 확인창 상태 추가
+  // 실수 방지용 확인창 상태 추가
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
-  // 🟢 1단계: 실루엣 클릭 시 바로 진화하지 않고 확인창 띄우기
+  // 1단계: 실루엣 클릭 시 바로 진화하지 않고 확인창 띄우기
   const handleInitialSelect = (evoId: number) => {
     if (phase !== 'idle') return;
     setConfirmingId(evoId);
   };
 
-  // 🟢 2단계: 확인창에서 '진화 시작' 버튼을 눌렀을 때 실행되는 런너님의 오리지널 애니메이션 로직
+  // 2단계: 확인창에서 '진화 시작' 버튼을 눌렀을 때 실행되는 런너님의 오리지널 애니메이션 로직
   const confirmEvolution = () => {
     if (confirmingId === null) return;
     const evoId = confirmingId;
@@ -65,12 +65,11 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-xl transition-all duration-500">
       
-      {/* ⚡ 번쩍임 이펙트 (화면 전체 화이트아웃) */}
+      {/* 번쩍임 이펙트 (화면 전체 화이트아웃) */}
       {phase === 'flash' && (
         <div className="fixed inset-0 bg-white z-[120] animate-[pulse_0.2s_ease-in-out]" />
       )}
 
-      {/* 🟢 실수 방지용 확인창 오버레이 (카드 위에 부드럽게 나타남) */}
       {confirmingId !== null && phase === 'idle' && (
         <div className="absolute inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
           <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-[320px] w-full mx-4 border-2 border-purple-200 transform-gpu animate-[bounce_0.3s_ease-out]">
@@ -131,7 +130,6 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
             }
 
             return (
-              // 🟢 변경됨: onClick 시 handleEvolutionSelect 대신 handleInitialSelect 실행
               <div key={evo.id} onClick={() => handleInitialSelect(evo.id)} className={cardClasses}>
                 
                 {/* 카드 뒷면 (모자이크 실루엣) */}

@@ -260,20 +260,23 @@ export function useBamkongGrowth() {
   }, [user, gamePoints, ap, playedGames, MAX_AP]);
 
   // 상점 구매 로직
-  const spendGamePoints = useCallback(async (cost: number, itemId?: string, isApPotion?: boolean) => {
+  const spendGamePoints = useCallback(async (cost: number, itemType: 'ap' | 'skin', value: number | string) => {
     if (!user || gamePoints < cost) return false;
 
     const nextPoints = gamePoints - cost;
-    setGamePoints(nextPoints);
+    setGamePoints(nextPoints); // 낙관적 업데이트
 
     try {
       const userRef = doc(db, 'bamkong_growth', user.id);
       const updateData: any = { gamePoints: nextPoints };
       
-      if (isApPotion) {
-        const nextAp = Math.min(MAX_AP, ap + 5);
+      if (itemType === 'ap' && typeof value === 'number') {
+        const nextAp = Math.min(MAX_AP, ap + value);
         setAp(nextAp);
         updateData.ap = nextAp;
+      } else if (itemType === 'skin' && typeof value === 'string') {
+        setInventory(prev => [...prev, value]);
+        updateData.inventory = arrayUnion(value);
       }
       
       await setDoc(userRef, updateData, { merge: true });
@@ -282,7 +285,7 @@ export function useBamkongGrowth() {
       console.error('아이템 구매 실패:', error);
       return false;
     }
-  }, [user, gamePoints, ap]);
+  }, [user, gamePoints, ap, MAX_AP]);
 
   const saveEvolution = useCallback(async (evolutionId: number) => {
     if (!user) return;
