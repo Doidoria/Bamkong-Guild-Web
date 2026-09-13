@@ -34,10 +34,11 @@ export const ALBUM_DATA = [
   { 
     id: 4, 
     title: '지크로니움 레이드', 
-    date: '2026.08.30', 
+    date: '2026.09.13', 
     desc: '새로운 런너님들을 위해 매일 같이 뛰어드려요!',
     images: [
-      '/images/albumgallery/album-4.png'
+      '/images/albumgallery/album-4.png',
+      '/images/albumgallery/album-4-sub.png'
     ], 
   },
   { 
