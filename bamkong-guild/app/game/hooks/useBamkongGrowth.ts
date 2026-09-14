@@ -28,6 +28,7 @@ export function useBamkongGrowth() {
   const [isEvolved, setIsEvolved] = useState(false);
   const [evolutionId, setEvolutionId] = useState<number | null>(null);
   const [acornPlays, setAcornPlays] = useState(0);
+  const [dashPlays, setDashPlays] = useState(0);
   
   // 100레벨 이상일 경우 필요 경험치 2배 (100 -> 200)
   const maxExp = level >= 100 ? 200 : 100; 
@@ -79,6 +80,7 @@ export function useBamkongGrowth() {
             return history.date === todayStr ? (history.count || 0) : 0;
           };
           setAcornPlays(checkTodayCount(data.acornPlayHistory));
+          setDashPlays(checkTodayCount(data.dashPlayHistory));
 
           if (isNicknameChanged || isNameChanged || isImageChanged) {
             const updateData: any = { name: user.name, image: user.image };
@@ -292,6 +294,30 @@ export function useBamkongGrowth() {
     }
   }, [user, acornPlays, gamePoints]);
 
+  // 달려라 밤콩 전용 플레이 처리 (하루 5회 제한)
+  const handleDashPlay = useCallback(async (rewardPoints: number) => {
+    if (!user) return;
+    if (dashPlays >= 5) return;
+    
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const nextPlays = dashPlays + 1;
+    const nextPoints = gamePoints + rewardPoints;
+    
+    setDashPlays(nextPlays);
+    setGamePoints(nextPoints); // 낙관적 업데이트
+
+    try {
+      const userRef = doc(db, 'bamkong_growth', user.id);
+      await setDoc(userRef, { 
+        gamePoints: nextPoints, 
+        dashPlayHistory: { date: todayStr, count: nextPlays } 
+      }, { merge: true });
+    } catch (error) {
+      console.error('달려라 밤콩 결과 저장 실패:', error);
+    }
+  }, [user, dashPlays, gamePoints]);
+
   // 상점 구매 로직
   const spendGamePoints = useCallback(async (cost: number, itemType: 'ap' | 'skin', value: number | string) => {
     if (!user || gamePoints < cost) return false;
@@ -422,6 +448,6 @@ export function useBamkongGrowth() {
     gamePoints, inventory, spendGamePoints,
     gainExp, resetGame, fillAp, levelUpTen, 
     playedGames, handleMinigamePlay, resetMinigameStatus,
-    saveEvolution, isEvolved, evolutionId, acornPlays, handleAcornPlay
+    saveEvolution, isEvolved, evolutionId, acornPlays, handleAcornPlay, dashPlays, handleDashPlay
   };
 }

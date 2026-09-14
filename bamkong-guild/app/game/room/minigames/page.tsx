@@ -73,25 +73,27 @@ export default function MinigameHubPage() {
             </button>
           </Link>
 
-          {/* 🟢 2. 오픈 예정 게임 1 */}
-          <div className="relative bg-stone-950/50 rounded-[2rem] p-6 border-2 border-stone-800/50 flex flex-col opacity-75 grayscale hover:grayscale-0 transition-all duration-500 cursor-not-allowed">
-            <div className="absolute inset-0 bg-stone-950/40 z-10 rounded-[2rem] flex flex-col items-center justify-center backdrop-blur-[2px]">
-              <Lock className="w-12 h-12 text-stone-500 mb-3 drop-shadow-md" />
-              <span className="bg-stone-800 text-stone-300 font-bold px-4 py-2 rounded-full border border-stone-700 text-sm tracking-widest">COMING SOON</span>
-            </div>
-
-            <div className="w-full aspect-video bg-stone-900 rounded-2xl mb-6 flex items-center justify-center border border-stone-800">
-              <span className="text-6xl font-black text-stone-800">?</span>
+          {/* 2. 플레이 가능한 미니게임 (달려라 밤콩) */}
+          <Link href="/game/room/minigames/dash" className="group relative bg-stone-900/80 backdrop-blur-md rounded-[2rem] p-6 border-2 border-stone-800 hover:border-amber-500 hover:bg-stone-900 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(245,158,11,0.2)] flex flex-col overflow-hidden cursor-pointer">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl -mr-10 -mt-10 transition-all group-hover:bg-amber-500/20"></div>
+            
+            <div className="w-full aspect-video bg-gradient-to-br from-amber-900/50 to-stone-950 rounded-2xl mb-6 flex items-center justify-center relative overflow-hidden border border-stone-700/50 group-hover:border-amber-500/50 transition-colors">
+              <div className="absolute inset-0 opacity-20 mix-blend-overlay group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: 'linear-gradient(90deg, #f59e0b 1px, transparent 1px)', backgroundSize: '20px 100%' }}></div>
+              <Gamepad2 className="w-16 h-16 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)] group-hover:scale-110 transition-transform duration-300 relative z-10" />
             </div>
             
-            <h3 className="text-xl font-black text-stone-500 mb-2">비밀의 미니게임</h3>
-            <p className="text-stone-600 text-sm mb-6 flex-1">
-              새로운 게임이 곧 업데이트될 예정입니다. 조금만 기다려주세요!
-            </p>
-            <div className="w-full py-4 bg-stone-800 text-stone-600 font-black rounded-xl text-center">
-              준비 중
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-xl sm:text-2xl font-black text-white group-hover:text-amber-400 transition-colors">달려라 밤콩!</h3>
+              <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2 py-1 rounded border border-amber-500/30">NEW</span>
             </div>
-          </div>
+            <p className="text-stone-400 text-sm mb-6 flex-1 break-keep">
+              장애물을 뛰어넘고 끝없이 달려보세요! 달린 거리에 비례하여 포인트를 획득합니다.
+            </p>
+            
+            <button className="w-full py-4 bg-amber-600 group-hover:bg-amber-500 text-stone-950 font-black rounded-xl transition-colors flex items-center justify-center gap-2">
+              <Sparkles className="w-5 h-5" /> 플레이하기
+            </button>
+          </Link>
 
           {/* 🟢 3. 오픈 예정 게임 2 */}
           <div className="relative bg-stone-950/50 rounded-[2rem] p-6 border-2 border-stone-800/50 flex flex-col opacity-75 grayscale hover:grayscale-0 transition-all duration-500 cursor-not-allowed">
