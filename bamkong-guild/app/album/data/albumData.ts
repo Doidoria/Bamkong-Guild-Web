@@ -38,7 +38,8 @@ export const ALBUM_DATA = [
     desc: '새로운 런너님들을 위해 매일 같이 뛰어드려요!',
     images: [
       '/images/albumgallery/album-4.png',
-      '/images/albumgallery/album-4-sub.png'
+      '/images/albumgallery/album-4-sub.png',
+      '/images/albumgallery/album-4-sub2.png',
     ], 
   },
   { 
