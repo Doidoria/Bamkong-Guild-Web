@@ -4,12 +4,13 @@ export const ALBUM_DATA = [
   { 
     id: 1, 
     title: '길퀘 마치고 기념 사진', 
-    date: '2026.08.22', 
+    date: '2026.08.22~', 
     desc: '다 같이 모여서 옹기종기 스샷 찍은 날!',
     images: [
       '/images/albumgallery/album-1.png', 
       '/images/albumgallery/album-1-sub.png',
-      '/images/albumgallery/album-1-sub2.png'
+      '/images/albumgallery/album-1-sub2.png',
+      '/images/albumgallery/album-1-sub3.png'
     ], 
   },
   { 
@@ -86,11 +87,10 @@ export const ALBUM_DATA = [
   { 
     id: 9, 
     title: '길드 점령전', 
-    date: '2026.09.12', 
+    date: '2026.09.19', 
     desc: '밤콩 길드원들과 신나는 즐겜 점령전!',
     images: [
-      '/images/albumgallery/album-9.png', 
-      '/images/albumgallery/album-9-sub.png'
+      '/images/albumgallery/album-9.png',
     ], 
   },
   { 
