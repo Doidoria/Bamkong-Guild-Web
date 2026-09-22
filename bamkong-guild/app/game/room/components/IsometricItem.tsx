@@ -1,7 +1,7 @@
 // app/game/room/components/IsometricItem.tsx
 'use client';
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
 
 interface IsometricItemProps {
   id: string;
@@ -22,18 +22,19 @@ export default function IsometricItem({
   sizeClass = 'w-32', isLightSource, isNight, onPositionChange, onInteract
 }: IsometricItemProps) {
   const isDragging = useRef(false);
+  const controls = useAnimation();
   const calculatedZIndex = baseZIndex !== undefined ? baseZIndex : Math.floor(yPos * 100);
 
-  const clampToIsometricFloor = (targetX: number, targetY: number) => {
+  const clampToIsometricFloor = (targetX: number, targetY: number, oldX: number, oldY: number) => {
     const centerX = 50; 
     const centerY = 70;
     const widthRatio = 40;
     const heightRatio = 20;
-
+    
     if ((Math.abs(targetX - centerX) / widthRatio) + (Math.abs(targetY - centerY) / heightRatio) <= 1) {
       return { x: targetX, y: targetY };
     }
-    return { x: 50, y: 70 }; // 영역 밖으로 드래그 시 방 중앙으로 리셋
+    return { x: oldX, y: oldY }; 
   };
 
   // 밤일 때 빛나는 효과 조건부 적용
@@ -46,6 +47,7 @@ export default function IsometricItem({
       drag 
       dragElastic={0.05}
       dragMomentum={false}
+      animate={controls}
       onDragStart={() => {
         isDragging.current = true;
       }}
@@ -64,9 +66,10 @@ export default function IsometricItem({
         const rawNewX = xPos + percentX;
         const rawNewY = yPos + percentY;
 
-        const { x: finalX, y: finalY } = clampToIsometricFloor(rawNewX, rawNewY);
+        const { x: finalX, y: finalY } = clampToIsometricFloor(rawNewX, rawNewY, xPos, yPos);
 
         onPositionChange(id, finalX, finalY);
+        controls.set({ x: 0, y: 0 });
       }}
       // 드래그 중일 때 붕 떠오르는 애니메이션
       whileDrag={{ scale: 1.1, zIndex: 100, cursor: 'grabbing' }}
