@@ -60,7 +60,7 @@ export default function IsometricItem({
         setTimeout(() => {
           isDragging.current = false;
         }, 50);
-        const SENSITIVITY = 0.4; // 취향에 따라 0.2 ~ 0.5 사이로 조절해 보세요.
+        const SENSITIVITY = 0.6; // 취향에 따라 0.2 ~ 0.5 사이로 조절해 보세요.
         const percentX = (info.offset.x / window.innerWidth) * 100 * SENSITIVITY;
         const percentY = (info.offset.y / window.innerHeight) * 100 * SENSITIVITY;
         const rawNewX = xPos + percentX;
