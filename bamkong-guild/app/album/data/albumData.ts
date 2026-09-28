@@ -10,7 +10,8 @@ export const ALBUM_DATA = [
       '/images/albumgallery/album-1.png', 
       '/images/albumgallery/album-1-sub.png',
       '/images/albumgallery/album-1-sub2.png',
-      '/images/albumgallery/album-1-sub3.png'
+      '/images/albumgallery/album-1-sub3.png',
+      '/images/albumgallery/album-1-sub4.png',
     ], 
   },
   { 
@@ -96,11 +97,10 @@ export const ALBUM_DATA = [
   { 
     id: 10, 
     title: '비공정 낚시 단체샷', 
-    date: '2026.09.30', 
+    date: '2026.09.28', 
     desc: '드디어 대물 낚은 날 🎣',
     images: [
       '/images/albumgallery/album-10.png', 
-      '/images/albumgallery/album-10-sub.png'
     ],
   },
   { 
