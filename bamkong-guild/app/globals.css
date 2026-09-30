@@ -1,3 +1,4 @@
+/* global.css */
 @import "tailwindcss";
 @plugin "@tailwindcss/typography"; /* 마크다운 스타일링을 위한 플러그인 */
 
