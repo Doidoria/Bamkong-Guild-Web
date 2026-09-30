@@ -56,13 +56,11 @@ export default function EventsPage() {
               </p>
 
               <div>
-                <Link
-                  href={`/events/${mainEvent.id}`}
-                  className="group/cta inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-amber-900/30 transition-all duration-300 hover:scale-[1.05] active:scale-95"
+                <div className="group/cta inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-400 text-stone-950 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-amber-900/30 transition-all duration-300 active:scale-95"
                 >
                   이벤트 자세히 보기 (이미지 클릭)
                   <ArrowRight className="w-6 h-6 group-hover/cta:translate-x-1.5 transition-transform duration-300" />
-                </Link>
+                </div>
               </div>
             </div>
 
