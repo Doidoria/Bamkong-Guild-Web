@@ -6,6 +6,8 @@ import { domToPng } from 'modern-screenshot';
 import { Camera, Download, Send, X, Loader2 } from 'lucide-react';
 import { shareRoomToDiscord } from '../actions';
 
+const MAX_UPLOAD_BYTES = 3.5 * 1024 * 1024;
+
 interface ShareRoomModalProps {
   roomRef: React.RefObject<HTMLElement | null>;
   onClose: () => void;
@@ -16,6 +18,34 @@ export default function ShareRoomModal({ roomRef, onClose, userName }: ShareRoom
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  /** 디스코드 전송용: PNG dataURL → JPEG Blob (가로 최대 1920px) */
+  async function compressForDiscord(dataUrl: string, maxWidth = 1920, quality = 0.85): Promise<Blob> {
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+
+    const ratio = Math.min(1, maxWidth / img.naturalWidth);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.naturalWidth * ratio);
+    canvas.height = Math.round(img.naturalHeight * ratio);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('캔버스를 생성할 수 없습니다.');
+
+    // JPEG는 투명도가 없으므로 배경색을 먼저 칠함
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('이미지 변환에 실패했습니다.'))),
+        'image/jpeg',
+        quality,
+      );
+    });
+  }
 
   const handleCapture = async () => {
     if (!roomRef.current) return;
@@ -52,14 +82,19 @@ export default function ShareRoomModal({ roomRef, onClose, userName }: ShareRoom
     link.click();
   };
 
-  const handleDiscordShare = async () => {
+    const handleDiscordShare = async () => {
     if (!previewUrl) return;
     setIsSending(true);
 
     try {
-      const blob = await (await fetch(previewUrl)).blob();
+      const blob = await compressForDiscord(previewUrl);
+      if (blob.size > MAX_UPLOAD_BYTES) {
+        alert('이미지 용량이 너무 큽니다. 다시 캡처해 주세요.');
+        return;
+      }
+
       const formData = new FormData();
-      formData.append('file', blob, 'room.png');
+      formData.append('file', blob, 'room.jpg');
 
       const result = await shareRoomToDiscord(formData);
       alert(result.message);

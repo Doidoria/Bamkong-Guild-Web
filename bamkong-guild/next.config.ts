@@ -6,10 +6,10 @@ const nextConfig: NextConfig = {
     qualities: [75, 80, 85],
   },
   experimental: {
-  serverActions: {
-    bodySizeLimit: '5mb',
+    serverActions: {
+      bodySizeLimit: '4mb',
+    },
   },
-},
 };
 
 export default nextConfig;

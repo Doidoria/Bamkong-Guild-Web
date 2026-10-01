@@ -15,7 +15,7 @@ export interface ShareRoomResult {
   message: string;
 }
 
-const MAX_FILE_BYTES = 8 * 1024 * 1024; // 디스코드 웹후크 첨부 한도보다 여유 있게
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomResult> {
   // 1) 서버에서 세션 검증
@@ -31,7 +31,7 @@ export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomR
 
   // 2) 파일 검증
   const file = formData.get('file');
-  if (!(file instanceof Blob) || file.type !== 'image/png') {
+  if (!(file instanceof Blob) || file.type !== 'image/jpeg') {
     return { ok: false, message: '이미지 파일이 올바르지 않습니다.' };
   }
   if (file.size > MAX_FILE_BYTES) {
@@ -48,7 +48,7 @@ export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomR
         title: '🌰 밤콩이 방 자랑하기!',
         description: `**${displayName}**님이 정성스럽게 꾸민 방이에요!\n어떤가요? 너무 아늑해 보이지 않나요? ✨`,
         color: 16100911,
-        image: { url: 'attachment://room.png' },
+        image: { url: 'attachment://room.jpg' },
         footer: { text: '테일즈런너 밤콩 길드 웹 시스템' },
         timestamp: new Date().toISOString(),
       },
@@ -57,7 +57,7 @@ export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomR
 
   const body = new FormData();
   body.append('payload_json', JSON.stringify(payload));
-  body.append('file', file, 'room.png');
+  body.append('file', file, 'room.jpg');
 
   try {
     const res = await fetch(webhookUrl, { method: 'POST', body });
