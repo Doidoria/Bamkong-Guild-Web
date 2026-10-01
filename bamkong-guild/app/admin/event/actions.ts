@@ -7,7 +7,7 @@ import { getAdminSession } from '@/app/lib/auth';
 import { postDiscordWebhook, escapeDiscordMarkdown, type DiscordEmbed } from '@/app/lib/discordWebhook';
 import { getEventById, type GuildEvent } from '@/app/events/data/eventData';
 import {
-  MAX_PLACE, ROUND_COUNT, computeStandings, scoreForRank,
+  EMPTY_BOARD, MAX_PLACE, ROUND_COUNT, computeStandings, scoreForRank,
   type RoundRanks, type ScoreboardData, type Standing,
 } from './scoring';
 
