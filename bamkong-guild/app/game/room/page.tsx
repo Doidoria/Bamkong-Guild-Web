@@ -51,7 +51,7 @@ export default function BamkongRoomPage() {
     }
   }, [isEvolved, evolutionId]);
 
-  const ADMIN_DISCORD_ID = process.env.NEXT_PUBLIC_ADMIN_DISCORD_ID;
+  const ADMIN_DISCORD_ID = process.env.NEXT_ADMIN_DISCORD_ID;
   const isAdmin = user?.id === ADMIN_DISCORD_ID;
   
   // 하단 인벤토리 슬라이드 상태 추가

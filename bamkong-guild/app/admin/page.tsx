@@ -1,75 +1,35 @@
 // app/admin/page.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GuildMember } from './types';
-import { getDaysSinceJoined, getDaysSinceLastPromotion, getPromotionInfo } from './utils';
+import { getDaysSinceLastPromotion, getPromotionInfo } from './utils';
 import { Lock, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import AdminStats from './components/AdminStats';
 import AdminMemberForm from './components/AdminMemberForm';
 import AdminMemberTable from './components/AdminMemberTable';
-import { getGameSession } from '../game/actions'; 
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true); // 권한 검증 로딩 상태 추가
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isCheckAttempted = useRef(false);
-
-  // 디스코드 로그인 기반 최고 관리자 검증 로직
+  // 권한 검사는 app/admin/layout.tsx(서버)에서 처리됨
   useEffect(() => {
-    if (isCheckAttempted.current) return;
-    isCheckAttempted.current = true;
-    
-    const verifyAdmin = async () => {
-      try {
-        const user = await getGameSession();
-        const userId = (user as any)?.id; 
-        const ADMIN_UIDS = process.env.NEXT_PUBLIC_ADMIN_UIDS?.split(',') || []; 
-
-        if (!user || !ADMIN_UIDS.includes(userId)) {
-          alert('최고 관리자 권한이 없습니다! 🌰');
-          router.push('/');
-          return;
-        }
-
-        // 검증 통과
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error('관리자 권한 확인 에러:', error);
-        router.push('/');
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-
-    verifyAdmin();
-  }, [router]);
-
-  // Firebase 실시간 데이터 연동
-  useEffect(() => {
-    // 권한 검증이 끝나지 않았으면 DB 호출을 차단합니다.
-    if (!isAuthorized) return; 
-
     const q = query(collection(db, 'members'), orderBy('joined_at', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const membersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+      const membersData = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
       })) as GuildMember[];
       setMembers(membersData);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [isAuthorized]);
+  }, []);
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -160,7 +120,7 @@ export default function AdminDashboard() {
   };
 
   // ⏳ 권한 검증 및 데이터 로딩 화면
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-stone-950 flex flex-col items-center justify-center font-sans">
         <Lock className="w-8 h-8 text-amber-500 mb-4 animate-pulse" />

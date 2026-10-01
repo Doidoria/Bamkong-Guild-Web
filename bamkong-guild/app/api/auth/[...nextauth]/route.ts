@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
       authorization: { params: { scope: 'identify guilds guilds.members.read' } },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET || 'bamkong-fallback-secret',
+  // secret: process.env.NEXTAUTH_SECRET || 'bamkong-fallback-secret',
   
   callbacks: {
     async jwt({ token, account }) {
@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
             return token; 
           }
           
-          const BAMKONG_ID = process.env.NEXT_PUBLIC_BAMKONG_GUILD_ID;
+          const BAMKONG_ID = process.env.NEXT_BAMKONG_GUILD_ID;
           const isBamkongMember = guilds.some((guild: any) => guild.id === BAMKONG_ID);
           
           token.isBamkongMember = isBamkongMember;

@@ -79,7 +79,7 @@ export default function ShareRoomModal({ roomRef, onClose, userName }: ShareRoom
       formData.append('payload_json', JSON.stringify(payload));
       formData.append('file', blob, 'room.png');
 
-      const webhookUrl = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''; 
+      const webhookUrl = process.env.NEXT_DISCORD_WEBHOOK_URL || ''; 
       
       if (!webhookUrl) {
         alert('디스코드 웹후크 URL이 설정되지 않았습니다.');

@@ -7,7 +7,7 @@ export default withAuth(
     const userId = req.nextauth.token?.sub;
 
     // .env 파일의 환경변수를 가져와서 콤마(,) 기준으로 배열 변환
-    const adminUids = process.env.NEXT_PUBLIC_ADMIN_UIDS?.split(",") || [];
+    const adminUids = process.env.NEXT_ADMIN_UIDS?.split(",") || [];
 
     // 관리자 배열에 ID가 없으면 메인 페이지("/")로 강제 리다이렉트
     if (!adminUids.includes(userId as string)) {
