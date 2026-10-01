@@ -8,7 +8,7 @@ export interface AdminSession {
 }
 
 function getAdminUids(): string[] {
-  return (process.env.ADMIN_UIDS ?? '')
+  return (process.env.NEXT_ADMIN_UIDS ?? '')
     .split(',')
     .map((uid) => uid.trim())
     .filter(Boolean);
