@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { GuildMember, MemberPatch, NewMemberInput } from './types';
 import { getDaysSinceLastPromotion, getPromotionInfo } from './utils';
-import { Lock, Gamepad2, RefreshCw } from 'lucide-react';
+import { Lock, Gamepad2, RefreshCw, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import AdminStats from './components/AdminStats';
 import AdminMemberForm from './components/AdminMemberForm';
@@ -130,6 +130,13 @@ export default function AdminDashboard() {
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               새로고침
             </button>
+            <Link
+              href="/admin/event"
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold rounded-xl border border-emerald-500/20 transition-all"
+            >
+              <Trophy className="w-4 h-4" />
+              이벤트 점수판
+            </Link>
             <Link
               href="/admin/game"
               className="group shrink-0 flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold rounded-xl border border-amber-500/20 transition-all shadow-sm"

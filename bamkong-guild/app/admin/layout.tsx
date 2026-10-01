@@ -1,4 +1,4 @@
-// app/game/layout.tsx — 전체 교체
+// app/game/layout.tsx
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { getGuildMemberSession } from '@/app/lib/auth';
