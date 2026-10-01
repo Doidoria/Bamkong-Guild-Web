@@ -27,6 +27,11 @@ export interface EventPenalty {
   decision: string;
 }
 
+export interface EventEligibility {
+  minGrade: string;
+  excludedGrades: string[];
+}
+
 export interface GuildEvent {
   id: string;
   title: string;
@@ -46,6 +51,7 @@ export interface GuildEvent {
   };
   rewards: EventReward[];
   penalty: EventPenalty;
+  eligibility?: EventEligibility;
 }
 
 export const events: GuildEvent[] = [
@@ -103,6 +109,10 @@ export const events: GuildEvent[] = [
       target: '꼴찌 1명',
       content: '디스코드 닉네임 변경 후 1주일간 유지',
       decision: '이벤트 당일 길드원 전체가 다 함께 의논해서 재밌는 별명으로 최종 결정',
+    },
+    eligibility: {
+      minGrade: '알밤콩',
+      excludedGrades: ['새싹', '밤콩'],
     },
   },
 ];

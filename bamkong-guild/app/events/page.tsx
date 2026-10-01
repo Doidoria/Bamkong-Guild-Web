@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { ArrowRight, CalendarDays, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowUp, CalendarDays, Sparkles } from 'lucide-react';
 import EventBackground from '../components/EventBackground';
 import EventStatusBadge from '../components/EventStatusBadge';
 import { formatEventDate, mainEvent } from './data/eventData';
@@ -39,6 +39,11 @@ export default function EventsPage() {
                   GUILD EVENT
                 </span>
                 <EventStatusBadge startDate={mainEvent.startDate} endDate={mainEvent.endDate} startTime={mainEvent.startTime} />
+                {mainEvent.eligibility && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 text-amber-500 text-xs font-bold border border-white/15">
+                    {mainEvent.eligibility.minGrade} 등급 이상
+                  </span>
+                )}
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight break-keep mb-5 bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 bg-clip-text text-transparent">
@@ -56,10 +61,10 @@ export default function EventsPage() {
               </p>
 
               <div>
-                <div className="group/cta inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-400 text-stone-950 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-amber-900/30 transition-all duration-300 active:scale-95"
-                >
+                <div className="group/cta inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-400 text-stone-950 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-amber-900/30 transition-all duration-300 active:scale-95">
                   이벤트 자세히 보기 (이미지 클릭)
-                  <ArrowRight className="w-6 h-6 group-hover/cta:translate-x-1.5 transition-transform duration-300" />
+                  <ArrowUp className="w-6 h-6 lg:hidden animate-bounce-slow" />
+                  <ArrowRight className="hidden lg:block w-6 h-6 group-hover/cta:translate-x-1.5 transition-transform duration-300" />
                 </div>
               </div>
             </div>
@@ -93,7 +98,7 @@ export default function EventsPage() {
 
                 {/* 하단 안내 라벨 */}
                 <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute inset-x-0 bottom-85 flex justify-center">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md text-white text-[12px] font-bold ring-1 ring-white/25 transition-all duration-300 group-hover:bg-amber-400 group-hover:text-stone-950 group-hover:ring-amber-300">
                     눌러서 자세히 보기
                   </span>
