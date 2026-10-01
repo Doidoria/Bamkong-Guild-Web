@@ -15,6 +15,12 @@ interface Props {
   onDeleteMember: (id: string) => void;
 }
 
+/** CSV 셀 이스케이프: 수식 실행(=, +, -, @) 방지 + 따옴표 처리 */
+const csvCell = (value: string): string => {
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+
 const ITEMS_PER_PAGE = 10; // 한 페이지당 보여줄 길드원 수
 
 const RANK_WEIGHT: Record<GuildMember['rank'], number> = {
@@ -72,7 +78,7 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
       const promotionText = m.is_blacklisted ? '제명' : isEligible ? '조건 충족' : (promoInfo ? `대기 (${promoInfo.reqDays - daysSincePromotion}일 남음)` : '최고 등급');
       
       return [
-        `"${m.nickname}"`,
+        csvCell(m.nickname),
         `"${m.rank}"`,
         `"${m.joined_at}"`,
         `"${daysJoined}일 차"`,
@@ -80,9 +86,9 @@ export default function AdminMemberTable({ members, stats, onPromote, onWarningC
         `"${m.warning_count}"`,
         `"${m.is_on_break ? '휴식 중' : '활동 중'}"`,
         `"${m.break_end_date || '-'}"`,
-        `"${(m.memo || '').replace(/"/g, '""')}"`,
+        csvCell(m.memo || ''),
         `"${m.is_blacklisted ? 'Y' : 'N'}"`,
-        `"${(m.blacklist_reason || '').replace(/"/g, '""')}"`,
+        csvCell(m.blacklist_reason || ''),
       ].join(',');
     });
 

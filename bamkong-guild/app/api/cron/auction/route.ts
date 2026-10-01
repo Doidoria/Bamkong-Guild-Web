@@ -1,6 +1,5 @@
 // app/api/cron/auction/route.ts
 import { NextResponse } from 'next/server';
-
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
 

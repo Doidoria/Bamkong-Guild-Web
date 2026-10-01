@@ -1,12 +1,12 @@
-// app/admin/layout.tsx (새 파일)
+// app/game/layout.tsx — 전체 교체
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { getAdminSession } from '@/app/lib/auth';
+import { getGuildMemberSession } from '@/app/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const admin = await getAdminSession();
-  if (!admin) redirect('/');
+export default async function GameLayout({ children }: { children: ReactNode }) {
+  const member = await getGuildMemberSession();
+  if (!member) redirect('/');
   return <>{children}</>;
 }

@@ -1,26 +1,26 @@
 // app/admin/components/AdminMemberForm.tsx
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { getDaysSinceJoined } from '../utils';
+import type { NewMemberInput } from '../types';
 
-interface Props { onAddMember: (member: any) => void; }
+interface Props {
+  onAddMember: (input: NewMemberInput) => Promise<boolean>;
+}
 
 export default function AdminMemberForm({ onAddMember }: Props) {
   const [newNickname, setNewNickname] = useState('');
   const [newJoinedAt, setNewJoinedAt] = useState(new Date().toISOString().split('T')[0]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNickname.trim()) return;
+    const nickname = newNickname.trim();
+    if (!nickname || submitting) return;
 
-    const days = getDaysSinceJoined(newJoinedAt);
-    const newMember = {
-      nickname: newNickname, rank: '새싹', joined_at: newJoinedAt, warning_count: 0,
-      is_on_break: false, promotion_status: days >= 30 ? '조건 충족' : '등업 대기',
-      created_at: new Date().toISOString(),
-    };
-    onAddMember(newMember);
-    setNewNickname('');
+    setSubmitting(true);
+    const ok = await onAddMember({ nickname, joined_at: newJoinedAt });
+    setSubmitting(false);
+    if (ok) setNewNickname(''); // 실패 시 입력값 유지
   };
 
   return (

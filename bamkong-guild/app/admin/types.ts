@@ -24,3 +24,10 @@ export interface AdminStatsData {
   warningCount: number;
   breakCount: number;
 }
+
+export interface NewMemberInput {
+  nickname: string;
+  joined_at: string; // YYYY-MM-DD
+}
+
+export type MemberPatch = Partial<Omit<GuildMember, 'id'>>;

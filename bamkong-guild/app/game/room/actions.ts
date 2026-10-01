@@ -1,7 +1,7 @@
 // app/game/room/actions.ts
 'use server';
 
-import { getGameSession } from '@/app/game/actions';
+import { getGuildMemberSession } from '@/app/lib/auth';
 
 interface SessionUser {
   id?: string;
@@ -19,9 +19,8 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomResult> {
   // 1) 서버에서 세션 검증
-  const user = (await getGameSession()) as SessionUser | null;
-  if (!user?.id) return { ok: false, message: '로그인이 필요합니다.' };
-  if (!user.isBamkongMember) return { ok: false, message: '밤콩 길드원만 자랑할 수 있어요! 🌰' };
+  const member = await getGuildMemberSession();
+  if (!member) return { ok: false, message: '밤콩 길드원만 자랑할 수 있어요! 🌰' };
 
   const webhookUrl = process.env.ROOM_WEBHOOK_URL;
   if (!webhookUrl) {
@@ -39,7 +38,7 @@ export async function shareRoomToDiscord(formData: FormData): Promise<ShareRoomR
   }
 
   // 3) 닉네임은 클라이언트 값이 아닌 세션 값 사용 (사칭 방지)
-  const displayName = user.guildNickname || user.name || '밤콩';
+  const displayName = member.nickname || '밤콩';
 
   const payload = {
     allowed_mentions: { parse: [] }, // 닉네임에 @everyone 등이 있어도 멘션 차단

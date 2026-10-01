@@ -1,6 +1,7 @@
 // app/api/auth/[...nextauth]/route.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import { fetchGuildMembership } from '@/app/lib/discord';
 
 export const dynamic = "force-dynamic"; 
 
@@ -10,7 +11,7 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID || '',
       clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
-      authorization: { params: { scope: 'identify guilds guilds.members.read' } },
+      authorization: { params: { scope: 'identify' } },
     }),
   ],
   // secret: process.env.NEXTAUTH_SECRET || 'bamkong-fallback-secret',
@@ -18,42 +19,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
-        try {
-          const res = await fetch('https://discord.com/api/users/@me/guilds', {
-            headers: {
-              Authorization: `Bearer ${account.access_token}`,
-            },
-          });
-          const guilds = await res.json();
-          
-          if (!Array.isArray(guilds)) {
-            token.isBamkongMember = false;
-            token.discordId = account.providerAccountId;
-            return token; 
-          }
-          
-          const BAMKONG_ID = process.env.NEXT_BAMKONG_GUILD_ID;
-          const isBamkongMember = guilds.some((guild: any) => guild.id === BAMKONG_ID);
-          
-          token.isBamkongMember = isBamkongMember;
-          token.discordId = account.providerAccountId;
-
-          // 권한이 추가되었으므로 이제 정상적으로 별명을 가져옵니다.
-          if (isBamkongMember) {
-            const memberRes = await fetch(`https://discord.com/api/users/@me/guilds/${BAMKONG_ID}/member`, {
-              headers: { Authorization: `Bearer ${account.access_token}` },
-            });
-            
-            if (memberRes.ok) {
-              const memberData = await memberRes.json();
-              token.guildNickname = memberData.nick; // 디스코드 API의 별명 키값은 'nick'
-            } else {
-              console.error('별명 가져오기 실패:', await memberRes.text());
-            }
-          }
-        } catch (error) {
-          token.isBamkongMember = false;
-        }
+        token.discordId = account.providerAccountId;
+        const membership = await fetchGuildMembership(account.providerAccountId);
+        token.isBamkongMember = membership?.isMember ?? false;
+        token.guildNickname = membership?.nickname ?? null;
       }
       return token;
     },

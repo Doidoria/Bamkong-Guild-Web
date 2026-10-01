@@ -1,35 +1,42 @@
 // app/admin/page.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { GuildMember } from './types';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { toast } from 'sonner';
+import { GuildMember, MemberPatch, NewMemberInput } from './types';
 import { getDaysSinceLastPromotion, getPromotionInfo } from './utils';
-import { Lock, Gamepad2 } from 'lucide-react';
+import { Lock, Gamepad2, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import AdminStats from './components/AdminStats';
 import AdminMemberForm from './components/AdminMemberForm';
 import AdminMemberTable from './components/AdminMemberTable';
+import {
+  listMembers, addMember, updateMember, promoteMember, changeWarning, deleteMember,
+} from './actions';
 
 export default function AdminDashboard() {
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // 권한 검사는 app/admin/layout.tsx(서버)에서 처리됨
-  useEffect(() => {
-    const q = query(collection(db, 'members'), orderBy('joined_at', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const membersData = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as GuildMember[];
-      setMembers(membersData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+  // 권한 검사는 app/admin/layout.tsx(서버)에서 처리, 데이터는 서버 액션으로 조회
+  const loadMembers = useCallback(async () => {
+    setRefreshing(true);
+    const result = await listMembers();
+    if (result.ok) setMembers(result.data);
+    else toast.error(result.message);
+    setLoading(false);
+    setRefreshing(false);
   }, []);
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
+
+  /** 서버가 돌려준 최신 문서로 로컬 상태만 교체 (재조회 없이 읽기 절약) */
+  const replaceMember = (updated: GuildMember) => {
+    setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  };
 
   // 통계 계산
   const stats = useMemo(() => {
@@ -53,70 +60,39 @@ export default function AdminDashboard() {
     return { totalMembers, newThisMonth, promotionCandidates, warningCount, breakCount };
   }, [members]);
 
-  const handleAddMember = async (newMember: any) => {
-    const isDuplicate = members.some(
-      (m) => m.nickname.toLowerCase() === newMember.nickname.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      alert(`'${newMember.nickname}' 님은 이미 등록된 길드원입니다! 🌰`);
-      return;
+    const handleAddMember = async (input: NewMemberInput): Promise<boolean> => {
+    const result = await addMember(input);
+    if (!result.ok) {
+      toast.error(result.message);
+      return false;
     }
-
-    try { await addDoc(collection(db, 'members'), newMember); } 
-    catch (error) { console.error("등록 에러:", error); }
+    setMembers((prev) => [result.data, ...prev]);
+    toast.success(`'${result.data.nickname}' 님을 등록했습니다! 🌰`);
+    return true;
   };
 
   const handlePromote = async (id: string) => {
-    const member = members.find(m => m.id === id);
-    if (!member) return;
-
-    const promoInfo = getPromotionInfo(member.rank);
-    if (!promoInfo) return; 
-
-    try {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const memberRef = doc(db, 'members', id);
-      await updateDoc(memberRef, {
-        rank: promoInfo.nextRank, 
-        promotion_status: '등업 완료',
-        last_promoted_at: todayStr 
-      });
-    } catch (error) {
-      console.error("등업 에러:", error);
-    }
+    const result = await promoteMember(id);
+    if (result.ok) replaceMember(result.data);
+    else toast.error(result.message);
   };
 
-  const handleWarningChange = async (id: string, currentWarning: number, delta: number) => {
-    try { await updateDoc(doc(db, 'members', id), { warning_count: Math.max(0, currentWarning + delta) }); } 
-    catch (error) { console.error("경고 수정 에러:", error); }
+  const handleWarningChange = async (id: string, _currentWarning: number, delta: number) => {
+    const result = await changeWarning(id, delta);
+    if (result.ok) replaceMember(result.data);
+    else toast.error(result.message);
   };
 
   const handleUpdateMember = async (id: string, updatedData: Partial<GuildMember>) => {
-    if (updatedData.nickname) {
-      const isDuplicate = members.some(
-        (m) => m.id !== id && m.nickname.toLowerCase() === updatedData.nickname!.toLowerCase()
-      );
-
-      if (isDuplicate) {
-        alert(`'${updatedData.nickname}' 닉네임은 이미 다른 길드원이 사용 중입니다! 🌰`);
-        return;
-      }
-    }
-
-    try {
-      await updateDoc(doc(db, 'members', id), updatedData);
-    } catch (error) {
-      console.error("업데이트 에러:", error);
-    }
+    const result = await updateMember(id, updatedData as MemberPatch);
+    if (result.ok) replaceMember(result.data);
+    else toast.error(result.message);
   };
 
   const handleDeleteMember = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'members', id));
-    } catch (error) {
-      console.error("삭제 에러:", error);
-    }
+    const result = await deleteMember(id);
+    if (result.ok) setMembers((prev) => prev.filter((m) => m.id !== result.data));
+    else toast.error(result.message);
   };
 
   // ⏳ 권한 검증 및 데이터 로딩 화면
@@ -145,13 +121,23 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <Link
-            href="/admin/game"
-            className="group shrink-0 flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold rounded-xl border border-amber-500/20 transition-all shadow-sm"
-          >
-            <Gamepad2 className="w-5 h-5 group-hover:scale-110 group-hover:rotate-12 transition-all" />
-            게임 관리자 센터로 이동
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={loadMembers}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-xl border border-stone-700 transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              새로고침
+            </button>
+            <Link
+              href="/admin/game"
+              className="group shrink-0 flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold rounded-xl border border-amber-500/20 transition-all shadow-sm"
+            >
+              <Gamepad2 className="w-5 h-5 group-hover:scale-110 group-hover:rotate-12 transition-all" />
+              게임 관리자 센터로 이동
+            </Link>
+          </div>
         </div>
 
         <AdminStats stats={stats} />
