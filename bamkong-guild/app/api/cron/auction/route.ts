@@ -9,15 +9,15 @@ export async function GET(request: Request) {
   }
 
   // 디스코드 채널 웹후크 URL (Vercel 환경변수에 추가 필요)
-  const NEXT_DISCORD_WEBHOOK_URL = process.env.AUCTION_WEBHOOK_URL;
+  const DISCORD_WEBHOOK_URL = process.env.AUCTION_WEBHOOK_URL;
 
-  if (!NEXT_DISCORD_WEBHOOK_URL) {
+  if (!DISCORD_WEBHOOK_URL) {
     return NextResponse.json({ success: false, error: '웹후크 URL이 없습니다.' }, { status: 500 });
   }
 
   try {
     // 디스코드 채널로 직접 웹후크 API 전송 (웹 코드 레벨 처리)
-    await fetch(NEXT_DISCORD_WEBHOOK_URL, {
+    await fetch(DISCORD_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
