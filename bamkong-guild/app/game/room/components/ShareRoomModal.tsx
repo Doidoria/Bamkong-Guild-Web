@@ -1,8 +1,10 @@
+// app/game/room/components/ShareRoomModal.tsx
 'use client';
 
 import React, { useState } from 'react';
 import { domToPng } from 'modern-screenshot'; 
 import { Camera, Download, Send, X, Loader2 } from 'lucide-react';
+import { shareRoomToDiscord } from '../actions';
 
 interface ShareRoomModalProps {
   roomRef: React.RefObject<HTMLElement | null>;
@@ -53,46 +55,15 @@ export default function ShareRoomModal({ roomRef, onClose, userName }: ShareRoom
   const handleDiscordShare = async () => {
     if (!previewUrl) return;
     setIsSending(true);
-    
-    try {
-      const res = await fetch(previewUrl);
-      const blob = await res.blob();
-      const formData = new FormData();
-      const payload = {
-        embeds: [
-          {
-            title: "🌰 밤콩이 방 자랑하기!",
-            description: `**${userName}**님이 정성스럽게 꾸민 방이에요!\n어떤가요? 너무 아늑해 보이지 않나요? ✨`,
-            color: 16100911, // Tailwind amber-500 색상의 Decimal 값 (0xf59e0b)
-            image: {
-              url: "attachment://room.png" // 하단에 첨부된 파일을 이미지 레이아웃으로 삽입
-            },
-            footer: {
-              text: "테일즈런너 밤콩 길드 웹 시스템"
-            },
-            timestamp: new Date().toISOString()
-          }
-        ]
-      };
 
-      // 단순 텍스트(content) 대신 payload_json으로 Embed 데이터를 전송합니다.
-      formData.append('payload_json', JSON.stringify(payload));
+    try {
+      const blob = await (await fetch(previewUrl)).blob();
+      const formData = new FormData();
       formData.append('file', blob, 'room.png');
 
-      const webhookUrl = process.env.NEXT_DISCORD_WEBHOOK_URL || ''; 
-      
-      if (!webhookUrl) {
-        alert('디스코드 웹후크 URL이 설정되지 않았습니다.');
-        return;
-      }
-
-      await fetch(webhookUrl, {
-        method: 'POST',
-        body: formData,
-      });
-
-      alert('디스코드 자랑하기 성공!');
-      onClose();
+      const result = await shareRoomToDiscord(formData);
+      alert(result.message);
+      if (result.ok) onClose();
     } catch (error) {
       console.error('디스코드 전송 실패:', error);
       alert('디스코드 전송에 실패했습니다.');

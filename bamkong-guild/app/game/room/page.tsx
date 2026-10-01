@@ -9,6 +9,7 @@ import { db } from '@/app/lib/firebase';
 import { useBamkongGrowth } from '../hooks/useBamkongGrowth';
 import { INVENTORY_ITEMS, InventoryItem } from './constants/inventory';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getIsAdmin } from '../actions';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import IsometricItem from './components/IsometricItem';
@@ -51,8 +52,11 @@ export default function BamkongRoomPage() {
     }
   }, [isEvolved, evolutionId]);
 
-  const ADMIN_DISCORD_ID = process.env.NEXT_ADMIN_DISCORD_ID;
-  const isAdmin = user?.id === ADMIN_DISCORD_ID;
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
+  }, []);
   
   // 하단 인벤토리 슬라이드 상태 추가
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
