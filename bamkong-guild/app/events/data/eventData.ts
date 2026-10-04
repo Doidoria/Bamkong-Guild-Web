@@ -66,7 +66,7 @@ export const events: GuildEvent[] = [
     summary: '실력도, 아이템 스펙도 상관없이 누구나 우승할 수 있는 3라운드 미니게임 합산전!',
     purpose: '실력이나 아이템 스펙 부담 없이 누구나 참여하는 밤콩 길드 친목 도모',
     concept: '총 3개의 미니게임 점수 합산제 (누구나 우승 가능!)',
-    rounds: [
+        rounds: [
       {
         round: 1,
         kind: 'hide',
@@ -76,19 +76,19 @@ export const events: GuildEvent[] = [
       },
       {
         round: 2,
-        kind: 'quiz',
-        title: '길마 팜 OX & 상식/사자성어 퀴즈',
-        tags: ['OX 퀴즈', '테런 TMI', '상식·사자성어', '넌센스 퀴즈'],
-        place: '길드장 팜',
-        description: '컨트롤 부담 없이 지식과 센스, 눈치로 승부하는 라운드',
-      },
-      {
-        round: 3,
         kind: 'race',
         title: '30인 아이템전 (동능력치)',
         tags: ['30인 달리기', '아이템전'],
         condition: '모든 참여자 능력치 동일 세팅',
         description: '템빨 및 스펙 차이 없이 오직 아이템 활용과 운, 변수로 겨루는 난장판 경기',
+      },
+      {
+        round: 3,
+        kind: 'quiz',
+        title: '길마 팜 상식 & 사자성어 퀴즈',
+        tags: ['상식·사자성어', '넌센스 퀴즈', '테런 TMI', 'MZ용어'],
+        place: '길드장 팜',
+        description: '컨트롤 부담 없이 지식과 센스, 눈치로 승부하는 라운드 (총 5판, 판마다 점수 합산)',
       },
     ],
     scoring: {

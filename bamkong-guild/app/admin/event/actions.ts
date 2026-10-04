@@ -7,8 +7,8 @@ import { getAdminSession } from '@/app/lib/auth';
 import { postDiscordWebhook, escapeDiscordMarkdown, type DiscordEmbed } from '@/app/lib/discordWebhook';
 import { getEventById, type GuildEvent } from '@/app/events/data/eventData';
 import {
-  EMPTY_BOARD, MAX_PLACE, ROUND_COUNT, computeStandings, scoreForRank,
-  type RoundRanks, type ScoreboardData, type Standing,
+  EMPTY_BOARD, MAX_PLACE, ROUND_COUNT, computeRoundStandings, computeStandings, slotKeys, subCount,
+  type RoundRanks, type ScoreboardData,
 } from './scoring';
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
@@ -61,6 +61,10 @@ function toBoard(data?: Partial<ScoreboardData>): ScoreboardData {
   };
 }
 
+function hasRoundEntries(board: ScoreboardData, round: number): boolean {
+  return slotKeys(round).some((key) => Object.keys(board.rounds[key] ?? {}).length > 0);
+}
+
 /** 참가 자격: eventData의 제외 등급이 아니고 블랙리스트가 아닌 길드원 */
 async function listEligible(event: GuildEvent): Promise<EventParticipant[]> {
   const excluded = event.eligibility?.excludedGrades ?? [];
@@ -99,8 +103,8 @@ function placeLabel(place: number): string {
   return MEDALS[place - 1] ?? `${place}위`;
 }
 
-function bold(s: Standing): string {
-  return `**${escapeDiscordMarkdown(s.nickname)}**`;
+function bold(nickname: string): string {
+  return `**${escapeDiscordMarkdown(nickname)}**`;
 }
 
 function joinLines(lines: string[]): string {
@@ -112,20 +116,23 @@ function joinLines(lines: string[]): string {
   return out || '아직 점수가 없습니다.';
 }
 
-/** 라운드 결과: 해당 라운드의 순위와 획득 점수만 (누적 합산은 최종 결과에서 공개) */
+/** 라운드 결과: 해당 라운드 점수만 (누적 합산은 최종 결과에서 공개) */
 function buildRoundEmbed(event: GuildEvent, round: number, board: ScoreboardData): DiscordEmbed {
-  const entries = Object.entries(board.rounds[round] ?? {})
-    .map(([id, rank]) => ({ rank, nickname: board.names[id] ?? '(알 수 없음)' }))
-    .sort((a, b) => a.rank - b.rank || a.nickname.localeCompare(b.nickname, 'ko'));
+  const subs = subCount(round);
+  const rows = computeRoundStandings(board, round);
 
-  const lines = entries.map(
-    (e) => `${placeLabel(e.rank)} **${escapeDiscordMarkdown(e.nickname)}** — +${scoreForRank(e.rank)}점`,
-  );
+  const lines = rows.map((s) => {
+    const detail = subs > 1 ? ` (${s.subScores.map((v) => v ?? '-').join(' / ')})` : '';
+    return `${placeLabel(s.place)} ${bold(s.nickname)} — +${s.total}점${detail}`;
+  });
 
+  const doneSubs = slotKeys(round).filter((key) => Object.keys(board.rounds[key] ?? {}).length > 0).length;
+  const progress = subs > 1 ? ` · ${doneSubs}/${subs}판 합산` : '';
   const isLastRound = round === ROUND_COUNT;
+
   return {
-    title: `${round}라운드 결과`,
-    description: `**${round}R · ${event.rounds[round - 1]?.title ?? ''}**\n\n${joinLines(lines)}`,
+    title: `🌰 ${round}라운드 결과`,
+    description: `**${round}R · ${event.rounds[round - 1]?.title ?? ''}${progress}**\n\n${joinLines(lines)}`,
     color: COLOR,
     footer: {
       text: isLastRound
@@ -136,20 +143,21 @@ function buildRoundEmbed(event: GuildEvent, round: number, board: ScoreboardData
   };
 }
 
-function buildFinalEmbed(event: GuildEvent, standings: Standing[]): DiscordEmbed {
+function buildFinalEmbed(event: GuildEvent, board: ScoreboardData): DiscordEmbed {
+  const standings = computeStandings(board, ROUND_COUNT);
   const lines = standings.map(
-    (s) => `${placeLabel(s.place)} ${bold(s)} — **${s.total}점** (${s.roundScores.map((v) => v ?? 0).join(' + ')})`,
+    (s) => `${placeLabel(s.place)} ${bold(s.nickname)} — **${s.total}점** (${s.roundScores.map((v) => v ?? 0).join(' + ')})`,
   );
 
   const rewardLines = event.rewards.map((r) => {
     const winners = standings.filter((s) => s.place === r.rank);
-    return `${MEDALS[r.rank - 1]} ${winners.length ? winners.map(bold).join(', ') : '해당 없음'} — ${r.prize}`;
+    return `${MEDALS[r.rank - 1]} ${winners.length ? winners.map((w) => bold(w.nickname)).join(', ') : '해당 없음'} — ${r.prize}`;
   });
 
   const lastPlace = standings[standings.length - 1]?.place;
   const losers = standings.filter((s) => s.place === lastPlace);
   const penaltyValue = losers.length
-    ? `${losers.map(bold).join(', ')}${losers.length > 1 ? ' (동점 — 당일 결정)' : ''}\n${event.penalty.content}`
+    ? `${losers.map((l) => bold(l.nickname)).join(', ')}${losers.length > 1 ? ' (동점 — 당일 결정)' : ''}\n${event.penalty.content}`
     : '-';
 
   return {
@@ -177,28 +185,42 @@ export async function loadScoreboard(
   });
 }
 
-/** 라운드 순위 저장. send=true면 저장된 값 기준으로 해당 라운드까지 합산해 전송 */
+/**
+ * 라운드 순위 저장. ranksBySub는 세부 판 순서대로 (1·2R은 1개, 3R은 5개).
+ * send=true면 저장된 값 기준으로 해당 라운드 결과 전송
+ */
 export async function saveRound(
   eventId: string,
   round: number,
-  ranks: RoundRanks,
+  ranksBySub: RoundRanks[],
   send: boolean,
 ): Promise<ActionResult<ScoreboardData>> {
   return run(async () => {
     const event = getEventOrThrow(eventId);
     const r = validRound(round);
+    const keys = slotKeys(r);
+    if (!Array.isArray(ranksBySub) || ranksBySub.length !== keys.length) {
+      throw new ValidationError('잘못된 요청입니다.');
+    }
+
     const eligible = new Map((await listEligible(event)).map((p) => [p.id, p.nickname]));
-    const clean = validRanks(ranks, eligible);
+    const clean = ranksBySub.map((ranks) => validRanks(ranks, eligible));
     const webhookUrl = send ? getWebhookUrl() : null;
-    if (send && Object.keys(clean).length === 0) throw new ValidationError('입력된 순위가 없습니다.');
+    if (send && clean.every((ranks) => Object.keys(ranks).length === 0)) {
+      throw new ValidationError('입력된 순위가 없습니다.');
+    }
 
     const ref = boardRef(event.id);
     const board = await getAdminDb().runTransaction(async (tx) => {
       const current = toBoard((await tx.get(ref)).data() as Partial<ScoreboardData> | undefined);
       const names = { ...current.names };
-      for (const id of Object.keys(clean)) names[id] = eligible.get(id) ?? names[id];
+      const rounds = { ...current.rounds };
+      keys.forEach((key, i) => {
+        rounds[key] = clean[i];
+        for (const id of Object.keys(clean[i])) names[id] = eligible.get(id) ?? names[id];
+      });
 
-      const next: ScoreboardData = { ...current, names, rounds: { ...current.rounds, [r]: clean } };
+      const next: ScoreboardData = { ...current, names, rounds };
       tx.set(ref, { ...next, updated_at: new Date().toISOString() });
       return next;
     });
@@ -220,12 +242,10 @@ export async function sendFinalResult(eventId: string): Promise<ActionResult<Sco
     const ref = boardRef(event.id);
     const board = toBoard((await ref.get()).data() as Partial<ScoreboardData> | undefined);
 
-    const missing = Array.from({ length: ROUND_COUNT }, (_, i) => i + 1).filter(
-      (r) => Object.keys(board.rounds[r] ?? {}).length === 0,
-    );
+    const missing = Array.from({ length: ROUND_COUNT }, (_, i) => i + 1).filter((r) => !hasRoundEntries(board, r));
     if (missing.length) throw new ValidationError(`${missing.join(', ')}라운드 순위가 저장되지 않았습니다.`);
 
-    const ok = await postDiscordWebhook(webhookUrl, [buildFinalEmbed(event, computeStandings(board, ROUND_COUNT))]);
+    const ok = await postDiscordWebhook(webhookUrl, [buildFinalEmbed(event, board)]);
     if (!ok) throw new ValidationError('디스코드 전송에 실패했습니다.');
 
     const finalSentAt = new Date().toISOString();
