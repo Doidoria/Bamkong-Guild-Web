@@ -112,7 +112,7 @@ export const events: GuildEvent[] = [
     },
     eligibility: {
       minGrade: '알밤콩',
-      excludedGrades: ['새싹', '밤콩'],
+      excludedGrades: ['새싹'],
     },
   },
 ];
