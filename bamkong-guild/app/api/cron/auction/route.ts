@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: '📢 **[옥션 알림]** 밤콩 여러분! [옥션]이 열렸습니다~!',
+        content: '📢 **[대운동회]** 밤콩 여러분! [오픈] 열렸습니다~!',
       }),
     });
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: '전송 실패' }, { status: 502 });
     }
 
-    return NextResponse.json({ success: true, message: '옥션 알림 전송 완료 🌰' });
+    return NextResponse.json({ success: true, message: '대운동회 알림 전송 완료 🌰' });
   } catch (error) {
     console.error('웹후크 전송 중 에러 발생:', error);
     return NextResponse.json({ success: false, error: '전송 실패' }, { status: 500 });
