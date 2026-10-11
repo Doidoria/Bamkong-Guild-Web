@@ -2,22 +2,36 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore'; 
-import { db } from '@/app/lib/firebase';
-import { Shield, Zap, Pencil, RotateCcw, RefreshCw, Trash2, UserX, Search, ArrowUpDown, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Shield, Zap, Pencil, RotateCcw, RefreshCw, Trash2, UserX, Search, ArrowUpDown, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import type { ActionResult } from '@/app/lib/adminAction';
+import {
+  deleteGameUser,
+  fillGameUserAp,
+  hardResetGameUser,
+  listGameUsers,
+  resetGameUserMinigames,
+  setGameUserLevel,
+} from './actions';
+import { MAX_AP, MAX_LEVEL, MIN_LEVEL, type BamkongUser, type GameUserPatch } from './types';
 
 const ITEMS_PER_PAGE = 10;
 
-interface BamkongUser {
-  id: string;
-  name?: string;           // NextAuth 기본 닉네임
-  guildNickname?: string;  // 길드 서버 별명
-  globalName: string;
-  level: number;
-  exp: number;
-  ap: number;
+/** 액션 호출 공통: 실패/통신 오류 시 토스트 후 null */
+async function callAction<T>(action: () => Promise<ActionResult<T>>): Promise<T | null> {
+  try {
+    const result = await action();
+    if (!result.ok) {
+      toast.error(result.message);
+      return null;
+    }
+    return result.data;
+  } catch (error) {
+    console.error('[admin/game]', error);
+    toast.error('서버와 통신하지 못했습니다.');
+    return null;
+  }
 }
 
 type SortOption = 'levelDesc' | 'levelAsc' | 'apDesc' | 'apAsc' | 'nameAsc';
@@ -32,28 +46,18 @@ export default function AdminGameDashboard() {
   const [sortBy, setSortBy] = useState<SortOption>('levelDesc');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const MAX_AP = 15;
-
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, sortBy]);
 
-  const fetchUsers = async (showToast = false) => {
+    const fetchUsers = async (showToast = false) => {
     setIsLoading(true);
-    try {
-      const querySnapshot = await getDocs(collection(db, 'bamkong_growth'));
-      const userData: BamkongUser[] = [];
-      querySnapshot.forEach((doc) => {
-        userData.push({ id: doc.id, ...doc.data() } as BamkongUser);
-      });
-      setUsers(userData);
+    const data = await callAction(() => listGameUsers());
+    if (data !== null) {
+      setUsers(data);
       if (showToast) toast.success('데이터를 최신 상태로 새로고침했습니다.');
-    } catch (error) {
-      console.error('데이터 로딩 실패:', error);
-      toast.error('데이터를 불러오는데 실패했습니다.');
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -68,9 +72,9 @@ export default function AdminGameDashboard() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // 필터링 및 정렬 파이프라인
+  // 필터링 및 정렬 파이프라인 (기존과 동일)
   const filteredAndSortedUsers = useMemo(() => {
-    let result = users.filter((user) => {
+    const result = users.filter((user) => {
       const targetName = (user.guildNickname || user.name || user.globalName || '').toLowerCase();
       return targetName.includes(debouncedSearch.toLowerCase());
     });
@@ -81,10 +85,11 @@ export default function AdminGameDashboard() {
         case 'levelAsc': return a.level - b.level;
         case 'apDesc': return b.ap - a.ap;
         case 'apAsc': return a.ap - b.ap;
-        case 'nameAsc':
+        case 'nameAsc': {
           const nameA = a.guildNickname || a.name || a.globalName || '';
           const nameB = b.guildNickname || b.name || b.globalName || '';
           return nameA.localeCompare(nameB);
+        }
         default: return 0;
       }
     });
@@ -98,97 +103,71 @@ export default function AdminGameDashboard() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // --- 기존 관리자 제어 함수들 (Toast 알림 적용) ---
-  const handleFillAp = async (userId: string) => {
-    await setDoc(doc(db, 'bamkong_growth', userId), { ap: MAX_AP }, { merge: true });
-    toast.success('행동력(AP)이 최대치로 충전되었습니다.');
-    fetchUsers();
+  // 삭제로 마지막 페이지가 비면 이전 페이지로
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  /** 전체 재조회 대신 바뀐 값만 로컬 상태에 반영 (Firestore 읽기 절감) */
+  const applyPatch = (userId: string, patch: GameUserPatch) => {
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...patch } : u)));
   };
 
-  // 100레벨 미만 설정 시 진화 데이터도 함께 지우는 로직 추가
+  // --- 관리자 제어 함수들 ---
+  const handleFillAp = async (userId: string) => {
+    const patch = await callAction(() => fillGameUserAp(userId));
+    if (patch === null) return;
+    applyPatch(userId, patch);
+    toast.success('행동력(AP)이 최대치로 충전되었습니다.');
+  };
+
   const handleEditLevel = async (userId: string, currentLevel: number, userName: string) => {
-    const input = window.prompt(`[${userName}]님의 변경할 레벨을 입력하세요 (1~200):`, String(currentLevel));
-    
-    if (input === null || input.trim() === '') return; 
-    
-    const newLevel = parseInt(input, 10);
-    
-    if (isNaN(newLevel) || newLevel < 1 || newLevel > 200) {
-      toast.error('1에서 200 사이의 유효한 숫자를 입력해주세요.');
+    const input = window.prompt(
+      `[${userName}]님의 변경할 레벨을 입력하세요 (${MIN_LEVEL}~${MAX_LEVEL}):`,
+      String(currentLevel),
+    );
+    if (input === null || input.trim() === '') return;
+
+    const newLevel = Number(input.trim());
+    if (!Number.isInteger(newLevel) || newLevel < MIN_LEVEL || newLevel > MAX_LEVEL) {
+      toast.error(`${MIN_LEVEL}에서 ${MAX_LEVEL} 사이의 정수를 입력해주세요.`);
       return;
     }
 
-    try {
-      // 업데이트할 데이터 객체 생성
-      const updateData: any = { level: newLevel };
-      
-      // 레벨이 100 미만으로 떨어지면 진화 상태 강제 초기화
-      if (newLevel < 100) {
-        updateData.isEvolved = false;
-        updateData.evolutionId = null;
-      }
-
-      await setDoc(doc(db, 'bamkong_growth', userId), updateData, { merge: true });
-      toast.success(`[${userName}]님의 레벨이 ${newLevel}(으)로 변경되었습니다.`);
-      fetchUsers();
-    } catch (error) {
-      console.error('레벨 업데이트 실패:', error);
-      toast.error('레벨을 변경하는 중 오류가 발생했습니다.');
-    }
+    const patch = await callAction(() => setGameUserLevel(userId, newLevel));
+    if (patch === null) return;
+    applyPatch(userId, patch);
+    toast.success(`[${userName}]님의 레벨이 ${newLevel}(으)로 변경되었습니다.`);
   };
 
   const handleResetMinigames = async (userId: string) => {
-    await setDoc(doc(db, 'bamkong_growth', userId), { playedGamesTime: {} }, { merge: true });
+    const patch = await callAction(() => resetGameUserMinigames(userId));
+    if (patch === null) return;
     toast.success('미니게임 플레이 횟수가 초기화되었습니다.');
-    fetchUsers();
   };
 
-  // 초기화 시 진화 데이터 리셋 로직
   const handleHardReset = async (userId: string, userName: string) => {
-    const isConfirmed = window.confirm(`⚠️ 경고: [${userName}]님의 모든 게임 데이터(레벨, 포인트, 방 꾸미기 등)를 삭제하고 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
-    
-    if (isConfirmed) {
-      try {
-        // 1. 성장 및 재화 데이터 초기화 (bamkong_growth)
-        await setDoc(doc(db, 'bamkong_growth', userId), { 
-          level: 1, 
-          exp: 0, 
-          ap: MAX_AP, 
-          gamePoints: 0,
-          inventory: [],
-          playedGamesTime: {},
-          acornPlayHistory: {},
-          isEvolved: false,
-          evolutionId: null
-        }, { merge: true });
+    const isConfirmed = window.confirm(
+      `⚠️ 경고: [${userName}]님의 모든 게임 데이터(레벨, 포인트, 방 꾸미기 등)를 삭제하고 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+    );
+    if (!isConfirmed) return;
 
-        // 2. 방 데이터 문서 자체를 삭제 (bamkong_rooms) -> 다음 입장 시 첫 방문 튜토리얼 발생
-        await deleteDoc(doc(db, 'bamkong_rooms', userId));
-
-        toast.success(`[${userName}]님의 모든 데이터가 1레벨(첫 접속 상태)로 초기화되었습니다.`);
-        fetchUsers();
-      } catch (error) {
-        console.error('데이터 초기화 실패:', error);
-        toast.error('초기화 중 오류가 발생했습니다.');
-      }
-    }
+    const patch = await callAction(() => hardResetGameUser(userId));
+    if (patch === null) return;
+    applyPatch(userId, patch);
+    toast.success(`[${userName}]님의 모든 데이터가 1레벨(첫 접속 상태)로 초기화되었습니다.`);
   };
 
-  // 영구 삭제 시 방 데이터 컬렉션도 함께 지우도록
   const handleDeleteUser = async (userId: string, userName: string) => {
-    const isConfirmed = window.confirm(`🚨 치명적 경고: [${userName}]님의 모든 게임 데이터를 DB에서 '완전히 삭제'하시겠습니까?\n이 작업은 절대 복구할 수 없습니다.`);
-    
-    if (isConfirmed) {
-      try {
-        await deleteDoc(doc(db, 'bamkong_growth', userId));
-        await deleteDoc(doc(db, 'bamkong_rooms', userId)); // 방 데이터도 함께 날림
-        toast.error(`[${userName}]님의 데이터가 영구적으로 삭제되었습니다.`);
-        fetchUsers();
-      } catch (error) {
-        console.error('데이터 삭제 실패:', error);
-        toast.error('삭제 중 오류가 발생했습니다.');
-      }
-    }
+    const isConfirmed = window.confirm(
+      `🚨 치명적 경고: [${userName}]님의 모든 게임 데이터를 DB에서 '완전히 삭제'하시겠습니까?\n이 작업은 절대 복구할 수 없습니다.`,
+    );
+    if (!isConfirmed) return;
+
+    const deletedId = await callAction(() => deleteGameUser(userId));
+    if (deletedId === null) return;
+    setUsers((prev) => prev.filter((u) => u.id !== deletedId));
+    toast.error(`[${userName}]님의 데이터가 영구적으로 삭제되었습니다.`);
   };
 
   return (

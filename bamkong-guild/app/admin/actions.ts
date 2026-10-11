@@ -3,11 +3,11 @@
 
 import type { DocumentSnapshot } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/app/lib/firebaseAdmin';
-import { getAdminSession } from '@/app/lib/auth';
+import { runAdminAction, ValidationError, type ActionResult } from '@/app/lib/adminAction';
 import { getDaysSinceJoined, getPromotionInfo } from './utils';
 import type { GuildMember, MemberPatch, NewMemberInput } from './types';
 
-export type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
+export type { ActionResult };
 
 const COLLECTION = 'members';
 const RANKS: readonly GuildMember['rank'][] = ['새싹', '밤콩', '알밤콩', '명예 밤콩', '부대장'];
@@ -17,18 +17,9 @@ const DISCORD_ID_PATTERN = /^\d{17,20}$/;
 const MAX_NICKNAME = 30;
 const MAX_TEXT = 500;
 
-class ValidationError extends Error {}
-
-/** 모든 액션 공통: 관리자 검증 + 에러 처리 */
-async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
-  try {
-    if (!(await getAdminSession())) return { ok: false, message: '관리자 권한이 없습니다.' };
-    return { ok: true, data: await fn() };
-  } catch (error) {
-    if (error instanceof ValidationError) return { ok: false, message: error.message };
-    console.error('[admin action]', error);
-    return { ok: false, message: '처리 중 오류가 발생했습니다.' };
-  }
+/** 모든 액션 공통: 관리자 검증 + 에러 처리 (app/lib/adminAction.ts) */
+function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
+  return runAdminAction(fn, 'admin action');
 }
 
 function memberRef(id: string) {
