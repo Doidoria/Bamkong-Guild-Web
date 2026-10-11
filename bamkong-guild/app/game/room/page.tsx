@@ -11,6 +11,7 @@ import { INVENTORY_ITEMS, InventoryItem } from './constants/inventory';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIsAdmin } from '../actions';
 import { toast } from 'sonner';
+import { giveGameUserPoints } from '@/app/admin/game/actions';
 import Link from 'next/link';
 import IsometricItem from './components/IsometricItem';
 import RoamingCharacter from './components/RoamingCharacter';
@@ -34,7 +35,7 @@ export default function BamkongRoomPage() {
   const [rewardItem, setRewardItem] = useState<InventoryItem | null>(null);
   const [claimedLevelRewards, setClaimedLevelRewards] = useState<number[]>([]); // 이미 수령한 레벨 기록
   const [pendingRewardLevel, setPendingRewardLevel] = useState<number | null>(null); // 현재 모달로 까고 있는 상자의 레벨
-  const { user, level, isEvolved, evolutionId, handleMinigamePlay } = useBamkongGrowth();
+  const { user, level, isEvolved, evolutionId } = useBamkongGrowth();
 
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
   const [unlockedSkins, setUnlockedSkins] = useState<number[]>([]); 
@@ -321,9 +322,10 @@ export default function BamkongRoomPage() {
           onSave={syncAdminActionToDB}
           onUnlockAllSkins={handleAdminUnlockAllSkins}
           onResetSkins={handleAdminResetSkins}
-          onGivePoints={() => {
-            handleMinigamePlay('roulette', 10000, 'point'); 
-            alert('10,000 포인트가 지급되었습니다! 새로고침 후 상점을 확인해 보세요.');
+          onGivePoints={async () => {
+            if (!user) return;
+            const result = await giveGameUserPoints(user.id, 10000);
+            alert(result.ok ? '10,000 포인트가 지급되었습니다! 새로고침 후 상점을 확인해 보세요.' : result.message);
           }}
         />
       )}

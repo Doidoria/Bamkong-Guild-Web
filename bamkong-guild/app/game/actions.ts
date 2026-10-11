@@ -1,4 +1,4 @@
-// app/game/actions.ts — 기존 파일에 import와 함수 추가
+// app/game/actions.ts
 'use server';
 
 import { getServerSession } from 'next-auth/next';

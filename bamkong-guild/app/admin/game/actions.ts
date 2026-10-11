@@ -2,6 +2,7 @@
 'use server';
 
 import { getAdminDb } from '@/app/lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 import {
   assertDocId,
   runAdminAction,
@@ -136,5 +137,17 @@ export async function deleteGameUser(userId: string): Promise<ActionResult<strin
     batch.delete(room);
     await batch.commit();
     return userId;
+  });
+}
+
+/** 관리자 포인트 지급 (미니게임 보상 함수를 빌려 쓰던 방식 대체) */
+export async function giveGameUserPoints(userId: string, amount: number): Promise<ActionResult<number>> {
+  return run(async () => {
+    if (!Number.isInteger(amount) || amount < 1 || amount > 100_000) {
+      throw new ValidationError('지급 포인트는 1~100,000 사이 정수로 입력해 주세요.');
+    }
+    const { growth } = refs(userId);
+    await commitExisting(() => growth.update({ gamePoints: FieldValue.increment(amount) }));
+    return amount;
   });
 }

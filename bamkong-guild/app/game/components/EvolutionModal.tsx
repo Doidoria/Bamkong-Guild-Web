@@ -6,7 +6,7 @@ import { Sparkles, AlertTriangle } from 'lucide-react';
 
 interface EvolutionModalProps {
   isOpen: boolean;
-  saveEvolution: (evolutionId: number) => Promise<void>;
+  saveEvolution: (evolutionId: number) => Promise<boolean>;
 }
 
 // 유지보수를 위해 8개의 진화 데이터를 배열로 관리합니다.
@@ -30,6 +30,7 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
   
   // 실수 방지용 확인창 상태 추가
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -40,25 +41,26 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
   };
 
   // 2단계: 확인창에서 '진화 시작' 버튼을 눌렀을 때 실행되는 런너님의 오리지널 애니메이션 로직
-  const confirmEvolution = () => {
-    if (confirmingId === null) return;
+  const confirmEvolution = async () => {
+    if (confirmingId === null || isSaving) return;
     const evoId = confirmingId;
-    setConfirmingId(null); // 확인창 닫기
-    
-    setSelectedEvolutionId(evoId); 
-    setPhase('evolving'); 
-    
+
+    // 저장 먼저: 연출 도중 탭을 닫아도 진화가 유지됨 (실패 메시지는 훅에서 토스트)
+    setIsSaving(true);
+    const saved = await saveEvolution(evoId);
+    setIsSaving(false);
+    if (!saved) return;
+
+    setConfirmingId(null);
+    setSelectedEvolutionId(evoId);
+    setPhase('evolving');
+
     setTimeout(() => {
-      setPhase('flash'); 
-      
+      setPhase('flash');
       setTimeout(() => {
-        setPhase('revealed'); 
-        
-        setTimeout(async () => {
-          await saveEvolution(evoId); 
-          router.push('/game/room');
-        }, 3000);
-      }, 200); 
+        setPhase('revealed');
+        setTimeout(() => router.push('/game/room'), 3000);
+      }, 200);
     }, 2500);
   };
 
@@ -81,11 +83,19 @@ export default function EvolutionModal({ isOpen, saveEvolution }: EvolutionModal
               한 번 진화가 시작되면 다른 모습으로 되돌릴 수 없습니다!
             </p>
             <div className="flex gap-3 w-full">
-              <button onClick={() => setConfirmingId(null)} className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl transition-colors">
+              <button
+                onClick={() => setConfirmingId(null)}
+                disabled={isSaving}
+                className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 disabled:opacity-60 disabled:cursor-not-allowed text-stone-600 font-bold rounded-xl transition-colors"
+              >
                 취소
               </button>
-              <button onClick={confirmEvolution} className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all">
-                진화 시작
+              <button
+                onClick={confirmEvolution}
+                disabled={isSaving}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all"
+              >
+                {isSaving ? '저장 중...' : '진화 시작'}
               </button>
             </div>
           </div>

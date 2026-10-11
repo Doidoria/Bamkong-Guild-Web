@@ -3,59 +3,34 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Zap, Shirt, Coins, Lock, BatteryCharging } from 'lucide-react';
+import { AP_ITEMS, SKIN_ITEMS, type ApShopItem, type SkinShopItem } from '@/app/game/growthConfig';
 import { useBamkongGrowth } from '@/app/game/hooks/useBamkongGrowth';
 import { toast } from 'sonner';
 
-const AP_ITEMS = [
-  { id: 'ap_1', name: '한 모금 드링크', ap: 1, cost: 100, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-900/50' },
-  { id: 'ap_2', name: '작은 드링크', ap: 2, cost: 200, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-900/50' },
-  { id: 'ap_3', name: '일반 드링크', ap: 3, cost: 300, color: 'from-blue-600 to-indigo-600', shadow: 'shadow-blue-900/50' },
-  { id: 'ap_5', name: '큰 드링크', ap: 5, cost: 490, color: 'from-indigo-500 to-purple-600', shadow: 'shadow-indigo-900/50' },
-  { id: 'ap_10', name: '메가 드링크', ap: 10, cost: 980, color: 'from-purple-600 to-fuchsia-600', shadow: 'shadow-purple-900/50' },
-  { id: 'ap_15', name: '기적의 엘릭서', ap: 15, cost: 1450, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-900/50' },
-];
-
-const SKIN_ITEMS = Array.from({ length: 8 }, (_, i) => ({
-  id: `final-${i + 1}`,
-  name: `스페셜 외형 ${i + 1}`,
-  cost: 5000,
-  src: `/images/evolutions/final-${i + 1}.png`
-}));
-
 export default function PointShopPage() {
-  const { gamePoints, spendGamePoints, ap, MAX_AP, inventory, isLoading } = useBamkongGrowth();
+    const { gamePoints, buyItem, ap, MAX_AP, inventory, isLoading } = useBamkongGrowth();
 
-  const handleBuyAp = async (cost: number, apAmount: number, itemName: string) => {
+  const handleBuyAp = async (item: ApShopItem) => {
     if (ap >= MAX_AP) {
       toast.error('이미 행동력이 가득 차 있습니다!');
       return;
     }
-    if (gamePoints < cost) {
+    if (gamePoints < item.cost) {
       toast.error('게임 포인트가 부족합니다!');
       return;
     }
-    if (window.confirm(`[${itemName}] 아이템을 ${cost.toLocaleString()}P에 구매하시겠습니까?\n(행동력 +${apAmount})`)) {
-      const success = await spendGamePoints(cost, 'ap', apAmount);
-      if (success) {
-        toast.success(`${itemName} 구매 완료! 행동력이 회복되었습니다.`);
-      } else {
-        toast.error('구매 처리 중 오류가 발생했습니다.');
-      }
+    if (window.confirm(`[${item.name}] 아이템을 ${item.cost.toLocaleString()}P에 구매하시겠습니까?\n(행동력 +${item.ap})`)) {
+      if (await buyItem(item.id)) toast.success(`${item.name} 구매 완료! 행동력이 회복되었습니다.`);
     }
   };
 
-  const handleBuySkin = async (cost: number, skinId: string, skinName: string) => {
-    if (gamePoints < cost) {
+  const handleBuySkin = async (skin: SkinShopItem) => {
+    if (gamePoints < skin.cost) {
       toast.error('게임 포인트가 부족합니다!');
       return;
     }
-    if (window.confirm(`[${skinName}] 외형을 ${cost.toLocaleString()}P에 구매하시겠습니까?`)) {
-      const success = await spendGamePoints(cost, 'skin', skinId);
-      if (success) {
-        toast.success(`${skinName} 획득! 내 방 옷장에서 착용할 수 있습니다.`);
-      } else {
-        toast.error('구매 처리 중 오류가 발생했습니다.');
-      }
+    if (window.confirm(`[${skin.name}] 외형을 ${skin.cost.toLocaleString()}P에 구매하시겠습니까?`)) {
+      if (await buyItem(skin.id)) toast.success(`${skin.name} 획득! 내 방 옷장에서 착용할 수 있습니다.`);
     }
   };
 
@@ -107,7 +82,7 @@ export default function PointShopPage() {
             {AP_ITEMS.map((item) => (
               <div 
                 key={item.id}
-                onClick={() => handleBuyAp(item.cost, item.ap, item.name)}
+                onClick={() => handleBuyAp(item)}
                 className={`relative rounded-[2rem] p-5 sm:p-6 flex flex-col items-center transition-all duration-300 cursor-pointer group
                   ${ap >= MAX_AP ? 'bg-stone-950/50 opacity-50 cursor-not-allowed grayscale border border-stone-800' : 'bg-stone-950/80 border-2 border-stone-800 hover:border-amber-500 hover:bg-stone-900 hover:shadow-[0_10px_30px_rgba(245,158,11,0.2)] hover:-translate-y-2'}`}
               >
@@ -145,7 +120,7 @@ export default function PointShopPage() {
               return (
                 <div 
                   key={skin.id}
-                  onClick={() => !isOwned && handleBuySkin(skin.cost, skin.id, skin.name)}
+                  onClick={() => !isOwned && handleBuySkin(skin)}
                   className={`relative rounded-[2rem] p-5 sm:p-6 flex flex-col items-center transition-all duration-300 cursor-pointer group
                     ${isOwned ? 'bg-stone-950/80 border border-stone-800 cursor-default' : 'bg-stone-950/80 border-2 border-stone-800 hover:border-orange-500 hover:bg-stone-900 hover:shadow-[0_10px_30px_rgba(249,115,22,0.2)] hover:-translate-y-2'}`}
                 >

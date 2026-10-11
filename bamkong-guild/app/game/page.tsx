@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import Leaderboard from './components/Leaderboard';
 import RewardModal from './components/RewardModal';
 import EvolutionModal from './components/EvolutionModal';
+import type { GrowthActionId } from './growthConfig';
 
 export default function GamePage() {
   const { 
@@ -60,10 +61,10 @@ export default function GamePage() {
     prevLevelRef.current = level;
   }, [level, isLoading]);
 
-  const handleAction = async (type: 'water'|'sun'|'fertilizer', amount: number, cost: number) => {
-    if (await gainExp(amount, cost)) {
+    const handleAction = async (type: GrowthActionId) => {
+    if (await gainExp(type)) {
       setActionType(type);
-      setTimeout(() => setActionType('none'), 1500); 
+      setTimeout(() => setActionType('none'), 1500);
     }
   };
 
@@ -181,17 +182,17 @@ export default function GamePage() {
           {/* 액션 버튼 */}
           {level < 100 || isEvolved ? (
             <div className="flex w-full max-w-xl justify-center gap-2 sm:gap-3 md:gap-5">
-              <button onClick={() => handleAction('water', 10, 1)} disabled={ap < 1 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 1 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-blue-50/80 backdrop-blur-sm hover:bg-blue-100 text-blue-600 border-blue-200 hover:-translate-y-1'}`}>
+              <button onClick={() => handleAction('water')} disabled={ap < 1 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 1 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-blue-50/80 backdrop-blur-sm hover:bg-blue-100 text-blue-600 border-blue-200 hover:-translate-y-1'}`}>
                 <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex items-center gap-0.5 bg-white/90 px-1.5 sm:px-2 py-0.5 rounded-full border border-blue-100 text-[9px] sm:text-[11px] font-black shadow-sm"><Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 fill-amber-300" /> 1</div>
                 <Droplet className={`w-6 h-6 sm:w-8 sm:h-8 ${ap >= 1 && level < 200 && 'group-active:scale-75 transition-transform'}`} />
                 <span className="font-black text-xs sm:text-sm tracking-tighter">물 주기 (+10)</span>
               </button>
-              <button onClick={() => handleAction('sun', 22, 2)} disabled={ap < 2 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 2 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-orange-50/80 backdrop-blur-sm hover:bg-orange-100 text-orange-600 border-orange-200 hover:-translate-y-1'}`}>
+              <button onClick={() => handleAction('sun')} disabled={ap < 2 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 2 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-orange-50/80 backdrop-blur-sm hover:bg-orange-100 text-orange-600 border-orange-200 hover:-translate-y-1'}`}>
                 <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex items-center gap-0.5 bg-white/90 px-1.5 sm:px-2 py-0.5 rounded-full border border-orange-100 text-[9px] sm:text-[11px] font-black shadow-sm"><Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 fill-amber-300" /> 2</div>
                 <Sun className={`w-6 h-6 sm:w-8 sm:h-8 ${ap >= 2 && level < 200 && 'group-active:scale-75 transition-transform'}`} />
                 <span className="font-black text-xs sm:text-sm tracking-tighter">햇빛 쬐기 (+22)</span>
               </button>
-              <button onClick={() => handleAction('fertilizer', 35, 3)} disabled={ap < 3 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 3 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-pink-50/80 backdrop-blur-sm hover:bg-pink-100 text-pink-600 border-pink-200 hover:-translate-y-1'}`}>
+              <button onClick={() => handleAction('fertilizer')} disabled={ap < 3 || level >= 200} className={`group relative flex-1 flex flex-col items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 md:p-5 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-md border-2 transition-all overflow-hidden ${ap < 3 || level >= 200 ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-80' : 'bg-pink-50/80 backdrop-blur-sm hover:bg-pink-100 text-pink-600 border-pink-200 hover:-translate-y-1'}`}>
                 <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex items-center gap-0.5 bg-white/90 px-1.5 sm:px-2 py-0.5 rounded-full border border-pink-100 text-[9px] sm:text-[11px] font-black shadow-sm"><Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 fill-amber-300" /> 3</div>
                 <Heart className={`w-6 h-6 sm:w-8 sm:h-8 ${ap >= 3 && level < 200 && 'group-active:scale-75 transition-transform'}`} />
                 <span className="font-black text-xs sm:text-sm tracking-tighter">영양제 (+35)</span>

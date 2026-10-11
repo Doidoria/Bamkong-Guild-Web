@@ -1,9 +1,10 @@
-// app/minigames/acorn-dodge/page.tsx
+// app/game/room/minigames/acorn-dodge/page.tsx
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Play, RefreshCw, Award, AlertCircle } from 'lucide-react';
 import { useBamkongGrowth } from '@/app/game/hooks/useBamkongGrowth';
+import { SCORE_GAMES } from '@/app/game/growthConfig';
 import { toast } from 'sonner';
 
 interface Acorn {
@@ -18,8 +19,9 @@ export default function AcornDodgePage() {
   const router = useRouter();
   
   // 훅에서 도토리 전용 데이터 가져오기
-  const { handleAcornPlay, acornPlays, isLoading } = useBamkongGrowth();
-  const MAX_PLAYS = 5;
+  const { startScoreGame, finishScoreGame, acornPlays, isLoading } = useBamkongGrowth();
+  const MAX_PLAYS = SCORE_GAMES.acorn.dailyLimit;
+  const [isStarting, setIsStarting] = useState(false);
   
   const [gameState, setGameState] = useState<'START' | 'PLAYING' | 'GAMEOVER'>('START');
   const [score, setScore] = useState(0);
@@ -43,11 +45,17 @@ export default function AcornDodgePage() {
     playerRef.current.x = newX;
   };
 
-  const startGame = () => {
+    const startGame = async () => {
+    if (isStarting) return;
     if (acornPlays >= MAX_PLAYS) {
       toast.error('오늘 도전 기회를 모두 소진했습니다! 내일 다시 도전해 주세요.');
       return;
     }
+    setIsStarting(true);
+    const started = await startScoreGame('acorn'); // 서버에 시작 시각 기록
+    setIsStarting(false);
+    if (!started) return;
+
     setGameState('PLAYING');
     setScore(0);
     setTimeSurvived(0);
@@ -58,16 +66,19 @@ export default function AcornDodgePage() {
 
   const gameOver = async () => {
     setGameState('GAMEOVER');
-    cancelAnimationFrame(requestRef.current!);
-    
-    // 밸런싱: 1초당 3포인트, 최대 200포인트 제한
+    cancelAnimationFrame(requestRef.current);
+
+    // 밸런싱: 1초당 3포인트, 최대 200포인트 (서버가 경과 시간 기준으로 다시 상한 적용)
     const currentSurvived = frameRef.current / 60;
     const calculatedPoints = Math.min(200, Math.floor(currentSurvived * 3));
     setEarnedPoints(calculatedPoints);
 
-    if (calculatedPoints > 0 && acornPlays < MAX_PLAYS) {
-      await handleAcornPlay(calculatedPoints);
-      toast.success(`생존 성공! ${calculatedPoints} P를 획득했습니다.`);
+    if (calculatedPoints > 0) {
+      const awarded = await finishScoreGame('acorn', calculatedPoints);
+      if (awarded !== null) {
+        setEarnedPoints(awarded);
+        toast.success(`생존 성공! ${awarded} P를 획득했습니다.`);
+      }
     }
   };
 

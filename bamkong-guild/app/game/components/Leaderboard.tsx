@@ -1,20 +1,8 @@
 // app/game/components/Leaderboard.tsx
 'use client';
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '@/app/lib/firebase';
 import { Trophy, Medal, RefreshCcw } from 'lucide-react';
-
-interface Ranker {
-  id: string;
-  level: number;
-  exp: number;
-  name?: string;
-  guildNickname?: string;
-  globalName?: string;
-  avatar?: string;
-  image?: string;
-}
+import { getLeaderboard, type Ranker } from '../growthActions';
 
 export default function Leaderboard() {
   const [rankers, setRankers] = useState<Ranker[]>([]);
@@ -23,20 +11,9 @@ export default function Leaderboard() {
   const fetchRanking = async () => {
     setIsLoading(true);
     try {
-      const q = query(
-        collection(db, 'bamkong_growth'),
-        orderBy('level', 'desc'),
-        orderBy('exp', 'desc'),
-        limit(10)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const data: Ranker[] = [];
-      querySnapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() } as Ranker);
-      });
-      
-      setRankers(data);
+      const result = await getLeaderboard();
+      if (result.ok) setRankers(result.data);
+      else console.error('랭킹 불러오기 실패:', result.message);
     } catch (error) {
       console.error('랭킹 불러오기 실패:', error);
     } finally {
@@ -103,12 +80,10 @@ export default function Leaderboard() {
                 </div>
                 {/* 프사 및 디스코드 닉네임 렌더링 */}
                 <div className="flex items-center gap-2">
-                  {ranker.avatar && (
-                    <img src={ranker.avatar} alt="프로필" className="w-6 h-6 rounded-full border border-stone-200" />
+                  {ranker.image && (
+                    <img src={ranker.image} alt="프로필" className="w-6 h-6 rounded-full border border-stone-200" />
                   )}
-                  <span className="font-bold text-[15px]">
-                    {ranker.guildNickname || ranker.globalName || ranker.name || ranker.id.substring(0, 8)}
-                  </span>
+                  <span className="font-bold text-[15px]">{ranker.displayName}</span>
                 </div>
               </div>
               <div className="text-right">

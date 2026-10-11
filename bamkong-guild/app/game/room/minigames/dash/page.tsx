@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Play, RefreshCw, Award, AlertCircle } from 'lucide-react';
 import { useBamkongGrowth } from '@/app/game/hooks/useBamkongGrowth';
+import { SCORE_GAMES } from '@/app/game/growthConfig';
 import { toast } from 'sonner';
 
 interface Obstacle {
@@ -19,9 +20,10 @@ export default function BamkongDashPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const router = useRouter();
   
-  // 훅에서 Dash 전용 데이터 가져오기 (가정)
-  const { handleDashPlay, dashPlays = 0, isLoading } = useBamkongGrowth();
-  const MAX_PLAYS = 5;
+  // 훅에서 Dash 전용 데이터 가져오기
+  const { startScoreGame, finishScoreGame, dashPlays, isLoading } = useBamkongGrowth();
+  const MAX_PLAYS = SCORE_GAMES.dash.dailyLimit;
+  const [isStarting, setIsStarting] = useState(false);
   
   const [gameState, setGameState] = useState<'START' | 'PLAYING' | 'GAMEOVER'>('START');
   const [score, setScore] = useState(0); // 달린 거리
@@ -63,18 +65,24 @@ export default function BamkongDashPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [jump]);
 
-  const startGame = () => {
+    const startGame = async () => {
+    if (isStarting) return;
     if (dashPlays >= MAX_PLAYS) {
       toast.error('오늘 도전 기회를 모두 소진했습니다! 내일 다시 도전해 주세요.');
       return;
     }
+    setIsStarting(true);
+    const started = await startScoreGame('dash');
+    setIsStarting(false);
+    if (!started) return;
+
     setGameState('PLAYING');
     setScore(0);
     setEarnedPoints(0);
     obstaclesRef.current = [];
     frameRef.current = 0;
     nextSpawnFrameRef.current = 100;
-    
+
     // 플레이어 초기화
     playerRef.current.y = groundY;
     playerRef.current.velocityY = 0;
@@ -83,23 +91,17 @@ export default function BamkongDashPage() {
 
   const gameOver = async () => {
     setGameState('GAMEOVER');
-    cancelAnimationFrame(requestRef.current!);
-    
+    cancelAnimationFrame(requestRef.current);
+
     const finalScore = Math.floor(frameRef.current / 5);
-    
     const calculatedPoints = Math.min(200, Math.floor(finalScore / 20));
     setEarnedPoints(calculatedPoints);
 
-    if (dashPlays < MAX_PLAYS) {
-      if (handleDashPlay) {
-        await handleDashPlay(calculatedPoints);
-        if (calculatedPoints > 0) {
-          toast.success(`질주 성공! ${calculatedPoints} P를 획득했습니다.`);
-        } else {
-          toast.info('조금 더 멀리 달려보세요! (0 P 획득)');
-        }
-      }
-    }
+    const awarded = await finishScoreGame('dash', calculatedPoints);
+    if (awarded === null) return;
+    setEarnedPoints(awarded);
+    if (awarded > 0) toast.success(`질주 성공! ${awarded} P를 획득했습니다.`);
+    else toast.info('조금 더 멀리 달려보세요! (0 P 획득)');
   };
 
   const update = () => {
