@@ -169,7 +169,6 @@ export default function GamePage() {
                 <img src="/images/fertilizer.png" alt="영양제 주기" className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain drop-shadow-lg" />
               </div>
             )}
-
             <div className={`relative w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 z-10 transition-transform duration-300 transform-gpu ${getCharacterAnimation()}`}>
               {isEvolved && evolutionId ? (
                 <img src={`/images/evolutions/final-${evolutionId}.png`} alt="밤콩 최종 진화체" className="w-full h-full object-contain drop-shadow-lg transition-opacity duration-300 animate-fadeIn" />

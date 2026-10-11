@@ -449,11 +449,11 @@ export function useBamkongGrowth() {
     }
   }, [user]);
 
-  return { 
+    return { 
     user, level, exp, maxExp, ap, MAX_AP, isLoading, timeUntilNextAp, 
     gamePoints, inventory, spendGamePoints,
-    gainExp, resetGame, fillAp, levelUpTen, 
-    playedGames, handleMinigamePlay, resetMinigameStatus,
+    gainExp,
+    playedGames, handleMinigamePlay,
     saveEvolution, isEvolved, evolutionId, acornPlays, handleAcornPlay, dashPlays, handleDashPlay
   };
 }
