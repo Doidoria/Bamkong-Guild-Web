@@ -34,10 +34,6 @@ export default function GamePage() {
   };
 
   useEffect(() => {
-    if (!isLoading) setDisplayLevel(level);
-  }, [isLoading, level]);
-
-  useEffect(() => {
     if (isLoading) return;
 
     if (isInitialLoad.current) {
@@ -48,7 +44,7 @@ export default function GamePage() {
     }
 
     if (level > prevLevelRef.current) {
-      if (level % 10 === 0 || level === 1) { 
+      if (level % 10 === 0) {
         setShowEvolutionEffect(true);
         setTimeout(() => {
           setShowEvolutionEffect(false);
