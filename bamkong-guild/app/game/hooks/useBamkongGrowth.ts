@@ -232,9 +232,9 @@ export function useBamkongGrowth() {
     return true;
   }, [level, exp, ap, user]);
 
-  // 미니게임 보상을 게임
+  // 미니게임 보상 지급 (하루 1회)
   const handleMinigamePlay = useCallback(async (
-    gameId: 'roulette'|'dice'|'card', 
+    gameId: 'roulette' | 'dice' | 'card',
     rewardAmount: number,
     rewardType: 'ap' | 'point' = 'ap' // 기본값은 기존 게임들을 위해 'ap'로 설정
   ) => {
@@ -245,10 +245,16 @@ export function useBamkongGrowth() {
     }
 
     const now = new Date();
-    setPlayedGames((prev) => ({ ...prev, [gameId]: true })); 
+    setPlayedGames((prev) => ({ ...prev, [gameId]: true }));
 
-    let updatePayload: any = {
-      [`playedGamesTime.${gameId}`]: now
+    // setDoc + merge는 중첩 객체를 깊은 병합함 → 다른 게임 기록은 유지됨
+    // (점 표기 키 'playedGamesTime.xxx'는 updateDoc에서만 경로로 해석됨)
+    const updatePayload: {
+      playedGamesTime: Partial<Record<'roulette' | 'dice' | 'card', Date>>;
+      ap?: number;
+      gamePoints?: number;
+    } = {
+      playedGamesTime: { [gameId]: now },
     };
 
     // 타입에 따라 지급 재화 분기 처리
