@@ -1,6 +1,7 @@
 // app/components/AlbumBook.tsx
 'use client';
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function AlbumBook() {
@@ -20,7 +21,14 @@ export default function AlbumBook() {
           }`}
         >
           {/* 겉표지 (앞면) */}
-          <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-amber-900 rounded-r-3xl rounded-l-lg shadow-2xl border border-stone-800 overflow-hidden flex flex-col items-center justify-center p-8 bg-[url('/images/bg-main.jpg')] bg-cover bg-center">
+          <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-amber-900 rounded-r-3xl rounded-l-lg shadow-2xl border border-stone-800 overflow-hidden flex flex-col items-center justify-center p-8">
+            <Image
+              src="/images/bg-main.jpg"
+              alt=""
+              fill
+              sizes="(min-width: 768px) 400px, 340px"
+              className="object-cover object-center"
+            />
             <div className="absolute inset-0 bg-amber-950/60 backdrop-blur-sm"></div>
             <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-black/40 to-transparent border-r border-white/10 z-10"></div>
             <div className="relative z-20 flex flex-col items-center">

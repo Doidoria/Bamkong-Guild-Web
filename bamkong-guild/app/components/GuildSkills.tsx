@@ -10,7 +10,9 @@ export default function GuildSkills() {
     <section id="skills" className="max-w-5xl mx-auto px-6 mb-36 relative z-10 scroll-mt-50">
       <div className="bg-white/90 border border-amber-200/60 rounded-[2rem] shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
           className="w-full p-6 md:p-8 flex items-center justify-between text-left hover:bg-amber-50/60 transition-colors group cursor-pointer"
         >
           <div className="flex items-center gap-4">
@@ -38,7 +40,7 @@ export default function GuildSkills() {
 
         {/* 아코디언 본문 (스킬 이미지 2개 영역) */}
         {isOpen && (
-          <div className="p-6 md:p-8 border-t border-amber-100 bg-amber-50/30 flex flex-col items-center gap-6 animate-fadeIn">
+          <div className="p-6 md:p-8 border-t border-amber-100 bg-amber-50/30 flex flex-col items-center gap-6 animate-fade-in">
             <p className="text-stone-700 font-bold text-center break-keep bg-white/80 px-4 py-2 rounded-full border border-amber-200/50 text-sm md:text-base">
               ✨ 밤콩 길드는 길드원 분들의 쾌적한 플레이를 위해 주요 길드 스킬을 지속해서 유지/강화하고 있습니다!
             </p>

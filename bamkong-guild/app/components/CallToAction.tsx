@@ -1,112 +1,115 @@
 // app/components/CallToAction.tsx
 'use client';
-import React, { useState } from 'react';
-import { MessageCircle, Copy, X, ArrowRight } from 'lucide-react';
 
-export default function CallToAction() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+import { useId, useState } from 'react';
+import { MessageCircle, Copy, Check, X, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
+import Modal from './Modal';
 
-  const formText = `닉네임 : 
+const FORM_TEXT = `닉네임 : 
 접속시간대(00~24시) : 
 나이 : 
 성별(남성 : 군필여부) : 
 레벨 : `;
-  const kakaoLink = "https://open.kakao.com/o/ssd2leIi";
+const KAKAO_LINK = 'https://open.kakao.com/o/ssd2leIi';
 
-  const handleCopyAndEnter = async () => {
+export default function CallToAction() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const titleId = useId();
+
+  const openModal = () => {
+    setIsCopied(false);
+    setIsModalOpen(true);
+  };
+
+  const handleCopy = async () => {
     try {
-      // 1. 클립보드에 양식 복사
-      await navigator.clipboard.writeText(formText);
+      await navigator.clipboard.writeText(FORM_TEXT);
       setIsCopied(true);
-      
-      // 2. 복사 완료 문구를 0.8초 정도 보여준 뒤 오픈톡 링크로 이동
-      setTimeout(() => {
-        window.open(kakaoLink, '_blank');
-        setIsModalOpen(false);
-        setIsCopied(false); // 상태 초기화
-      }, 800); 
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-      // 복사 권한이 없는 브라우저 환경을 위한 예외 처리
-      alert('복사에 실패했습니다. 오픈톡방에서 직접 양식을 작성해 주세요!');
-      window.open(kakaoLink, '_blank');
-      setIsModalOpen(false);
+      toast.success('양식이 복사됐어요! 오픈톡에 붙여넣어 주세요 🌰');
+    } catch {
+      toast.error('복사에 실패했어요. 양식을 길게 눌러 직접 복사해 주세요!');
     }
   };
 
   return (
-    <section id="contact" className="text-center py-24 flex flex-col items-center relative">
-      {/* 간판 이미지 버튼 (클릭 시 동일하게 팝업 오픈) */}
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="z-20 mb-4 hover:scale-110 transition-transform drop-shadow-lg inline-block cursor-pointer bg-transparent border-none p-0"
-      >
-        <img 
-          src="/images/cta-sign.png" 
-          alt="가입 문의 안내소" 
-          className="w-48 h-48 md:w-66 md:h-66 object-contain"
-        />
-      </button>
-      
-      {/* 메인 오픈톡 버튼 */}
+    <section id="contact" className="scroll-mt-20 text-center py-20 md:py-24 px-4 flex flex-col items-center relative">
       <button
-        onClick={() => setIsModalOpen(true)}
+        type="button"
+        onClick={openModal}
+        aria-label="가입 문의 안내 열기"
+        className="z-20 mb-4 hover:scale-110 transition-transform drop-shadow-lg cursor-pointer motion-reduce:transition-none"
+      >
+        <img src="/images/cta-sign.png" alt="" className="w-48 h-48 md:w-66 md:h-66 object-contain" />
+      </button>
+
+      <button
+        type="button"
+        onClick={openModal}
         className="group relative z-20 inline-flex items-center justify-center gap-3 px-10 py-5 md:px-12 md:py-6 bg-amber-700 text-white text-xl md:text-[21px] font-black rounded-full shadow-[0_8px_0_0_#92400e,0_15px_20px_rgba(0,0,0,0.2)] hover:translate-y-2 hover:shadow-[0_2px_0_0_#92400e,0_5px_10px_rgba(0,0,0,0.2)] active:translate-y-3 active:shadow-none transition-all duration-200"
       >
-        <MessageCircle className="w-7 h-7 group-hover:animate-bounce" />
+        <MessageCircle className="w-7 h-7 group-hover:animate-bounce" aria-hidden />
         1:1 오픈톡 가입 문의하기
       </button>
-      
-      <p className="mt-8 text-[13px] sm:text-[15px] md:text-base text-stone-700 font-bold bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 rounded-full border border-white/10 whitespace-nowrap">
+
+      <p className="mt-8 max-w-md text-sm md:text-base text-stone-800 font-bold bg-white/60 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/40 break-keep">
         🌰 가벼운 대화 후 길드 디스코드 서버로 안내해 드립니다. 🌰
       </p>
 
-      {/* 📋 양식 안내 팝업(모달) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white/95 border border-amber-200 rounded-[2rem] p-6 md:p-8 max-w-sm w-full shadow-2xl relative text-left">
-            {/* 닫기 버튼 */}
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 text-stone-400 hover:text-stone-600 transition-colors bg-stone-100 hover:bg-stone-200 p-1.5 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} labelledBy={titleId}>
+        <div className="text-left">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(false)}
+            aria-label="닫기"
+            className="absolute top-5 right-5 text-stone-400 hover:text-stone-600 transition-colors bg-stone-100 hover:bg-stone-200 p-1.5 rounded-full"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-            <h3 className="text-xl font-black text-amber-800 mb-2 flex items-center gap-2">
-              <span>📋</span> 가입 양식 안내
-            </h3>
-            <p className="text-sm text-stone-600 font-medium mb-6 break-keep">
-              원활한 가입 진행을 위해 아래 양식을 복사한 뒤 오픈톡방에 남겨주세요!
-            </p>
+          <h3 id={titleId} className="text-xl font-black text-amber-800 mb-2 flex items-center gap-2 pr-10">
+            <span aria-hidden>📋</span> 가입 양식 안내
+          </h3>
+          <p className="text-sm text-stone-600 font-medium mb-5 break-keep">
+            원활한 가입 진행을 위해 아래 양식을 복사한 뒤 오픈톡방에 남겨주세요!
+          </p>
 
-            {/* 양식 텍스트 박스 */}
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mb-6">
-              <p className="text-[13px] md:text-[14px] font-bold text-amber-900 leading-relaxed break-keep text-left whitespace-pre-line">
-                {formText}
-              </p>
-            </div>
+          {/* select-all: 복사 실패 시 길게 눌러 한 번에 선택 가능 */}
+          <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mb-5 text-[13px] md:text-sm font-bold text-amber-900 leading-relaxed whitespace-pre-line select-all">
+            {FORM_TEXT}
+          </div>
 
-            {/* 복사 및 입장 액션 버튼 */}
+          <div className="flex flex-col gap-2.5">
             <button
-              onClick={handleCopyAndEnter}
-              disabled={isCopied}
-              className="w-full group inline-flex items-center justify-center gap-2 px-6 py-4 bg-amber-700 hover:bg-amber-600 text-white text-[15px] md:text-base font-bold rounded-xl transition-all shadow-lg shadow-amber-900/20 disabled:opacity-80 disabled:cursor-not-allowed"
+              type="button"
+              onClick={handleCopy}
+              className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-xl border transition-colors ${
+                isCopied
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-200'
+              }`}
             >
-              {isCopied ? (
-                '복사 완료! 입장하는 중... 🏃'
-              ) : (
-                <>
-                  <Copy className="w-5 h-5" />
-                  양식 복사하고 입장하기
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
+              {isCopied ? <Check className="w-5 h-5" aria-hidden /> : <Copy className="w-5 h-5" aria-hidden />}
+              {isCopied ? '복사 완료!' : '① 양식 복사하기'}
             </button>
+
+            {/* 실제 <a> 링크라 팝업 차단에 걸리지 않음 */}
+            <a
+              href={KAKAO_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsModalOpen(false)}
+              className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-900/20 transition-all ${
+                isCopied ? 'ring-4 ring-amber-300/60' : ''
+              }`}
+            >
+              ② 오픈톡 입장하기
+              <ExternalLink className="w-4 h-4" aria-hidden />
+            </a>
           </div>
         </div>
-      )}
+      </Modal>
     </section>
   );
 }

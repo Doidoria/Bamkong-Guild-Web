@@ -72,3 +72,22 @@ body {
     background-color: rgb(245 158 11 / 0.8);
   }
 }
+
+/* 모달·아코디언 공통 애니메이션 (기존 animate-fade-in은 정의가 없어 동작하지 않았음) */
+@theme {
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-pop-in: pop-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bounce-slow { animation: none; }
+}

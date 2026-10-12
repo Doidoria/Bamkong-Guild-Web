@@ -56,7 +56,7 @@ function RouletteGame({ onPlay, hasPlayedToday }: MinigameProps) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 sm:gap-10 animate-fadeIn">
+    <div className="flex flex-col items-center gap-6 sm:gap-10 animate-fade-in">
       <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 drop-shadow-2xl">
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 text-3xl sm:text-4xl drop-shadow-md animate-bounce">👇</div>
         <div
@@ -143,7 +143,7 @@ function DiceGame({ onPlay, hasPlayedToday }: MinigameProps) {
   const getDiceEmoji = (num: number) => ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][num - 1];
 
   return (
-    <div className="flex flex-col items-center gap-8 sm:gap-12 animate-fadeIn">
+    <div className="flex flex-col items-center gap-8 sm:gap-12 animate-fade-in">
       <div className="flex gap-4 sm:gap-8">
         {dice.map((d, i) => (
           <div key={i} className={`text-7xl sm:text-8xl md:text-[9rem] text-amber-600 drop-shadow-xl transition-transform ${isRolling ? 'animate-[bounce_0.3s_infinite]' : 'hover:scale-110'}`}>
@@ -196,7 +196,7 @@ function CardGame({ onPlay, hasPlayedToday }: MinigameProps) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 sm:gap-12 animate-fadeIn w-full">
+    <div className="flex flex-col items-center gap-8 sm:gap-12 animate-fade-in w-full">
       <div className="flex gap-2 sm:gap-4 md:gap-10 [perspective:1000px] justify-center">
         {rewards.map((reward, idx) => (
           <div

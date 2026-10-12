@@ -87,7 +87,7 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
               </>
             )}
           
-            <div key={currentImageSrc} className="relative w-full h-full z-10 animate-fadeIn">
+            <div key={currentImageSrc} className="relative w-full h-full z-10 animate-fade-in">
               <img 
                 src={currentImageSrc} 
                 alt={`${photo.title} - ${currentIndex + 1}`}

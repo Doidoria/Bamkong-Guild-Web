@@ -172,9 +172,9 @@ export default function GamePage() {
             )}
             <div className={`relative w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 z-10 transition-transform duration-300 transform-gpu ${getCharacterAnimation()}`}>
               {isEvolved && evolutionId ? (
-                <img src={`/images/evolutions/final-${evolutionId}.png`} alt="밤콩 최종 진화체" className="w-full h-full object-contain drop-shadow-lg transition-opacity duration-300 animate-fadeIn" />
+                <img src={`/images/evolutions/final-${evolutionId}.png`} alt="밤콩 최종 진화체" className="w-full h-full object-contain drop-shadow-lg transition-opacity duration-300 animate-fade-in" />
               ) : (
-                <img ref={characterRef} src={`/images/characters/level-${Math.min(Math.floor(displayLevel / 10) + 1, 10)}.png`} alt="밤콩 캐릭터" className="w-full h-full object-contain drop-shadow-lg transition-opacity duration-300 animate-fadeIn" />
+                <img ref={characterRef} src={`/images/characters/level-${Math.min(Math.floor(displayLevel / 10) + 1, 10)}.png`} alt="밤콩 캐릭터" className="w-full h-full object-contain drop-shadow-lg transition-opacity duration-300 animate-fade-in" />
               )}
             </div>
           </div>
