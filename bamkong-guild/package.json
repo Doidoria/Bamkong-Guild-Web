@@ -13,7 +13,6 @@
     "canvas-confetti": "^1.9.4",
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
-    "firebase": "^12.17.1",
     "firebase-admin": "^14.3.0",
     "framer-motion": "^13.2.0",
     "lucide-react": "^1.31.0",

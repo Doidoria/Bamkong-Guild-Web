@@ -11,6 +11,7 @@ const juaFont = Jua({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bamkong-guild-web.vercel.app'),
   title: '밤콩 길드',
   description: '테일즈런너 따뜻하고 자유로운 성인 친목 디스코드 길드입니다 🌰',
   openGraph: {
