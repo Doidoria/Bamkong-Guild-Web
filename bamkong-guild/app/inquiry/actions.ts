@@ -7,55 +7,71 @@ import { runMemberAction } from '@/app/lib/memberAction';
 import { ValidationError, assertDocId, type ActionResult } from '@/app/lib/adminAction';
 import { postDiscordWebhook, escapeDiscordMarkdown } from '@/app/lib/discordWebhook';
 import {
-  COLLECTIONS, INQUIRY_CATEGORIES, MAX_CONTENT, MIN_CONTENT, POST_COOLDOWN_MS,
-  type InquiryCategory, type InquiryPage, type ReactionResult, type ReactionType,
+  COLLECTIONS, INQUIRY_CATEGORIES, MAX_CONTENT, MAX_TITLE, MIN_CONTENT, MIN_TITLE, RATE_LIMIT,
+  type InquiryCategory, type InquiryPage, type ListParams, type ReactionResult, type ReactionType,
 } from './types';
-import { fetchInquiryPage, reactionDocId, toCount, toReaction } from './inquiryStore';
+import { fetchInquiryPage, parseListParams, reactionDocId, toCount, toReaction } from './inquiryStore';
 
-export async function listInquiries(cursor: string | null = null): Promise<ActionResult<InquiryPage>> {
-  return runMemberAction((member) => fetchInquiryPage(cursor, member.discordId), 'inquiry list');
+export async function listInquiries(params: ListParams): Promise<ActionResult<InquiryPage>> {
+  return runMemberAction((member) => fetchInquiryPage(parseListParams(params), member.discordId), 'inquiry list');
+}
+
+function cleanText(value: unknown, min: number, max: number, label: string): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (text.length < min) throw new ValidationError(`${label}을 ${min}자 이상 적어 주세요.`);
+  if (text.length > max) throw new ValidationError(`${label}은 ${max}자까지 쓸 수 있어요.`);
+  return text;
 }
 
 export async function createInquiry(input: {
   category: InquiryCategory;
+  title: string;
   content: string;
-}): Promise<ActionResult<{ id: string }>> {
-  return runMemberAction(async (member) => {
+}): Promise<ActionResult<null>> {
+  // 길드원 확인만 하고 세션 정보는 일부러 쓰지 않음 → 작성자 기록이 어디에도 남지 않음
+  return runMemberAction(async () => {
     const category = INQUIRY_CATEGORIES.find((c) => c === input?.category);
     if (!category) throw new ValidationError('분류를 선택해 주세요.');
 
-    const content = typeof input?.content === 'string' ? input.content.trim() : '';
-    if (content.length < MIN_CONTENT) throw new ValidationError(`내용을 ${MIN_CONTENT}자 이상 적어 주세요.`);
-    if (content.length > MAX_CONTENT) throw new ValidationError(`내용은 ${MAX_CONTENT}자까지 쓸 수 있어요.`);
+    const title = cleanText(input?.title, MIN_TITLE, MAX_TITLE, '제목').replace(/\s+/g, ' ');
+    const content = cleanText(input?.content, MIN_CONTENT, MAX_CONTENT, '내용');
 
     const db = getAdminDb();
     const inquiryRef = db.collection(COLLECTIONS.inquiries).doc();
-    const authorRef = db.collection(COLLECTIONS.authors).doc(inquiryRef.id);
-    const cooldownRef = db.collection(COLLECTIONS.cooldowns).doc(member.discordId);
+    const rateRef = db.collection(COLLECTIONS.meta).doc('rate');
 
-    // 쿨다운 확인과 저장을 한 트랜잭션으로 → 연타해도 1건만 저장
+    // 전체 속도 제한 확인과 저장을 한 트랜잭션으로
     await db.runTransaction(async (tx) => {
-      const cooldown = await tx.get(cooldownRef);
-      const lastAt = cooldown.get('lastAt');
-      if (lastAt instanceof Timestamp && Date.now() - lastAt.toMillis() < POST_COOLDOWN_MS) {
-        throw new ValidationError('문의는 1분에 한 번만 남길 수 있어요. 잠시 후 다시 시도해 주세요.');
+      const rate = await tx.get(rateRef);
+      const windowStart = rate.get('windowStart');
+      const count = toCount(rate.get('count'));
+      const inWindow =
+        windowStart instanceof Timestamp && Date.now() - windowStart.toMillis() < RATE_LIMIT.windowMs;
+
+      if (inWindow && count >= RATE_LIMIT.max) {
+        throw new ValidationError('지금 문의가 많이 몰리고 있어요. 잠시 후 다시 시도해 주세요.');
       }
 
-      const now = FieldValue.serverTimestamp();
-      tx.set(inquiryRef, { category, content, up: 0, down: 0, createdAt: now });
-      // 작성자는 별도 컬렉션에 분리 저장 → 목록 조회 때 절대 같이 나가지 않음
-      tx.set(authorRef, { discordId: member.discordId, nickname: member.nickname ?? null, createdAt: now });
-      tx.set(cooldownRef, { lastAt: now });
+      tx.set(rateRef, inWindow ? { windowStart, count: count + 1 } : { windowStart: Timestamp.now(), count: 1 });
+      tx.set(inquiryRef, {
+        category,
+        title,
+        content,
+        status: '접수',
+        up: 0,
+        down: 0,
+        createdAt: FieldValue.serverTimestamp(),
+      });
     });
 
-    // 관리자 알림 (작성자 정보 제외). 알림 실패가 등록 실패가 되지 않도록 기록만 남김
+    // 관리자 알림. 알림 실패가 등록 실패가 되지 않도록 기록만 남김
     const webhookUrl = process.env.INQUIRY_WEBHOOK_URL;
     if (webhookUrl) {
       const preview = content.length > 200 ? `${content.slice(0, 200)}…` : content;
       const sent = await postDiscordWebhook(webhookUrl, [
         {
           title: `📮 새 익명 문의 · ${category}`,
-          description: escapeDiscordMarkdown(preview),
+          description: `**${escapeDiscordMarkdown(title)}**\n${escapeDiscordMarkdown(preview)}`,
           color: 16100911,
           timestamp: new Date().toISOString(),
         },
@@ -63,7 +79,7 @@ export async function createInquiry(input: {
       if (!sent) console.error('[inquiry] 웹후크 전송 실패');
     }
 
-    return { id: inquiryRef.id };
+    return null;
   }, 'inquiry create');
 }
 

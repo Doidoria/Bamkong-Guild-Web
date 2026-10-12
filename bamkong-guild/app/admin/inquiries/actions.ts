@@ -3,33 +3,30 @@
 
 import { getAdminDb } from '@/app/lib/firebaseAdmin';
 import { runAdminAction, assertDocId, ValidationError, type ActionResult } from '@/app/lib/adminAction';
-import { COLLECTIONS, type InquiryPage } from '@/app/inquiry/types';
-import { fetchInquiryPage } from '@/app/inquiry/inquiryStore';
+import { COLLECTIONS, INQUIRY_STATUSES, type InquiryPage, type InquiryStatus, type ListParams } from '@/app/inquiry/types';
+import { fetchInquiryPage, parseListParams } from '@/app/inquiry/inquiryStore';
 
-export interface InquiryAuthor {
-  discordId: string;
-  nickname: string | null;
+export async function listInquiriesForAdmin(params: ListParams): Promise<ActionResult<InquiryPage>> {
+  return runAdminAction(() => fetchInquiryPage(parseListParams(params), null), 'admin inquiry list');
 }
 
-export async function listInquiriesForAdmin(cursor: string | null = null): Promise<ActionResult<InquiryPage>> {
-  return runAdminAction(() => fetchInquiryPage(cursor, null), 'admin inquiry list');
-}
-
-/** 관리자가 "이름 보기"를 누를 때만 작성자 조회 */
-export async function revealInquiryAuthor(inquiryId: string): Promise<ActionResult<InquiryAuthor>> {
+export async function setInquiryStatus(
+  inquiryId: string,
+  status: InquiryStatus,
+): Promise<ActionResult<InquiryStatus>> {
   return runAdminAction(async () => {
     const id = assertDocId(inquiryId, '문의 ID');
-    const snap = await getAdminDb().collection(COLLECTIONS.authors).doc(id).get();
+    const next = INQUIRY_STATUSES.find((s) => s === status);
+    if (!next) throw new ValidationError('잘못된 상태입니다.');
 
-    const discordId = snap.get('discordId');
-    if (typeof discordId !== 'string') throw new ValidationError('작성자 정보가 없습니다.');
-    const nickname = snap.get('nickname');
-
-    return { discordId, nickname: typeof nickname === 'string' ? nickname : null };
-  }, 'admin inquiry reveal');
+    const ref = getAdminDb().collection(COLLECTIONS.inquiries).doc(id);
+    if (!(await ref.get()).exists) throw new ValidationError('삭제된 문의입니다.');
+    await ref.update({ status: next });
+    return next;
+  }, 'admin inquiry status');
 }
 
-/** 문의 + 작성자 + 반응 기록을 한 번에 삭제 */
+/** 문의 + 반응 기록을 한 번에 삭제 */
 export async function deleteInquiry(inquiryId: string): Promise<ActionResult<null>> {
   return runAdminAction(async () => {
     const id = assertDocId(inquiryId, '문의 ID');
@@ -39,7 +36,6 @@ export async function deleteInquiry(inquiryId: string): Promise<ActionResult<nul
 
     const batch = db.batch();
     batch.delete(db.collection(COLLECTIONS.inquiries).doc(id));
-    batch.delete(db.collection(COLLECTIONS.authors).doc(id));
     reactions.docs.forEach((d) => batch.delete(d.ref));
     await batch.commit();
 

@@ -1,33 +1,70 @@
 // app/inquiry/components/InquiryBoard.tsx
 'use client';
 
-import { useState, useTransition, type FormEvent } from 'react';
+import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { Send, ShieldCheck, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ChevronDown, PenLine, Send, ShieldCheck, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { createInquiry, listInquiries, reactToInquiry } from '../actions';
 import {
-  INQUIRY_CATEGORIES, MAX_CONTENT, MIN_CONTENT, formatKst,
-  type InquiryCategory, type InquiryItem, type InquiryPage, type ReactionType,
+  DEFAULT_LIST_PARAMS, INQUIRY_CATEGORIES, MAX_CONTENT, MAX_TITLE, MIN_CONTENT, MIN_TITLE,
+  formatKstDate, formatKstDateTime,
+  type InquiryCategory, type InquiryPage, type ListParams, type ReactionType,
 } from '../types';
-
-const CATEGORY_STYLES: Record<InquiryCategory, string> = {
-  건의: 'bg-amber-100 text-amber-800',
-  질문: 'bg-sky-100 text-sky-800',
-  불편사항: 'bg-orange-100 text-orange-800',
-  기타: 'bg-stone-100 text-stone-700',
-};
+import { CategoryBadge, StatusBadge } from './badges';
+import ListControls from './ListControls';
+import Pagination from './Pagination';
 
 export default function InquiryBoard({ initialPage }: { initialPage: InquiryPage }) {
-  const [items, setItems] = useState<InquiryItem[]>(initialPage.items);
-  const [nextCursor, setNextCursor] = useState<string | null>(initialPage.nextCursor);
-  const [category, setCategory] = useState<InquiryCategory>('건의');
-  const [content, setContent] = useState('');
+  const [data, setData] = useState<InquiryPage>(initialPage);
+  const [params, setParams] = useState<ListParams>(DEFAULT_LIST_PARAMS);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
-  const [isSubmitting, startSubmit] = useTransition();
-  const [isLoadingMore, startLoadMore] = useTransition();
 
-  const length = content.trim().length;
-  const canSubmit = length >= MIN_CONTENT && length <= MAX_CONTENT && !isSubmitting;
+  const [formOpen, setFormOpen] = useState(false);
+  const [category, setCategory] = useState<InquiryCategory>('건의');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+
+  const [isLoading, startLoading] = useTransition();
+  const [isSubmitting, startSubmit] = useTransition();
+  const listTopRef = useRef<HTMLDivElement>(null);
+
+  const titleLength = title.trim().length;
+  const contentLength = content.trim().length;
+  const canSubmit =
+    titleLength >= MIN_TITLE && titleLength <= MAX_TITLE &&
+    contentLength >= MIN_CONTENT && contentLength <= MAX_CONTENT &&
+    !isSubmitting;
+  const submitHint =
+    titleLength < MIN_TITLE
+      ? `제목을 ${MIN_TITLE}자 이상 입력해 주세요.`
+      : contentLength < MIN_CONTENT
+        ? `내용을 ${MIN_CONTENT}자 이상 입력해 주세요.`
+        : null;
+
+  const load = (next: ListParams) => {
+    startLoading(async () => {
+      try {
+        const res = await listInquiries(next);
+        if (!res.ok) {
+          toast.error(res.message);
+          return;
+        }
+        setParams({ ...next, page: res.data.page });
+        setData(res.data);
+        setExpandedId(null);
+      } catch {
+        toast.error('목록을 불러오지 못했어요.');
+      }
+    });
+  };
+
+  const changeParams = (patch: Partial<ListParams>) => load({ ...params, ...patch });
+
+  const changePage = (page: number) => {
+    changeParams({ page });
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,41 +72,18 @@ export default function InquiryBoard({ initialPage }: { initialPage: InquiryPage
 
     startSubmit(async () => {
       try {
-        const res = await createInquiry({ category, content });
+        const res = await createInquiry({ category, title, content });
         if (!res.ok) {
           toast.error(res.message);
           return;
         }
+        setTitle('');
         setContent('');
+        setFormOpen(false);
         toast.success('익명으로 등록됐어요! 🌰');
-
-        const list = await listInquiries(null);
-        if (list.ok) {
-          setItems(list.data.items);
-          setNextCursor(list.data.nextCursor);
-        }
+        load(DEFAULT_LIST_PARAMS); // 내 글이 보이도록 전체·최신순 1페이지로
       } catch {
         toast.error('등록하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      }
-    });
-  };
-
-  const handleLoadMore = () => {
-    if (!nextCursor) return;
-    startLoadMore(async () => {
-      try {
-        const res = await listInquiries(nextCursor);
-        if (!res.ok) {
-          toast.error(res.message);
-          return;
-        }
-        setItems((prev) => {
-          const seen = new Set(prev.map((i) => i.id));
-          return [...prev, ...res.data.items.filter((i) => !seen.has(i.id))];
-        });
-        setNextCursor(res.data.nextCursor);
-      } catch {
-        toast.error('목록을 불러오지 못했어요.');
       }
     });
   };
@@ -83,7 +97,10 @@ export default function InquiryBoard({ initialPage }: { initialPage: InquiryPage
         toast.error(res.message);
         return;
       }
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...res.data } : item)));
+      setData((prev) => ({
+        ...prev,
+        items: prev.items.map((item) => (item.id === id ? { ...item, ...res.data } : item)),
+      }));
     } catch {
       toast.error('반응을 저장하지 못했어요.');
     } finally {
@@ -92,134 +109,187 @@ export default function InquiryBoard({ initialPage }: { initialPage: InquiryPage
   };
 
   return (
-    <div className="space-y-8">
-      {/* 작성 영역 */}
-      <section className="bg-white/90 backdrop-blur-sm border border-amber-200/60 rounded-[2rem] p-6 md:p-8 shadow-lg">
-        <h2 className="text-2xl font-black text-stone-800 mb-2">무엇이든 편하게 남겨 주세요</h2>
-        <p className="text-sm text-stone-600 mb-4 break-keep">운영에 대한 건의, 궁금한 점, 불편했던 점 모두 환영해요.</p>
-
-        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 mb-5 text-sm text-stone-700 break-keep">
+    <div className="space-y-6">
+      {/* 안내 + 작성 */}
+      <section className="bg-white/90 backdrop-blur-sm border border-amber-200/60 rounded-[2rem] p-5 md:p-7 shadow-lg">
+        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-sm text-stone-700 break-keep">
           <ShieldCheck className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" aria-hidden />
           <p>
-            <b className="text-amber-900">다른 길드원에게는 익명</b>으로 표시돼요. 문제 해결을 위해{' '}
-            <b className="text-amber-900">운영진만</b> 작성자를 확인할 수 있어요.
+            작성자 정보는 <b className="text-amber-900">저장되지 않아요.</b> 운영진을 포함해{' '}
+            <b className="text-amber-900">누구도 작성자를 알 수 없으니</b> 편하게 남겨 주세요.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div role="radiogroup" aria-label="문의 분류" className="flex flex-wrap gap-2">
-            {INQUIRY_CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                role="radio"
-                aria-checked={category === c}
-                onClick={() => setCategory(c)}
-                className={`px-4 py-2 rounded-full text-sm font-bold border transition-colors ${
-                  category === c
-                    ? 'bg-amber-700 text-white border-amber-700'
-                    : 'bg-white text-stone-600 border-stone-200 hover:border-amber-300'
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+        <button
+          type="button"
+          onClick={() => setFormOpen((v) => !v)}
+          aria-expanded={formOpen}
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition-colors"
+        >
+          <PenLine className="w-4 h-4" aria-hidden />
+          {formOpen ? '작성 닫기' : '익명 문의 남기기'}
+        </button>
 
-          <div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              maxLength={MAX_CONTENT}
-              rows={5}
-              placeholder="내용을 입력해 주세요"
-              aria-label="문의 내용"
-              className="w-full resize-y rounded-2xl border border-stone-200 bg-white p-4 text-[15px] leading-relaxed outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-200/50 transition"
-            />
-            <div className="flex items-center justify-between mt-2">
-              <span className={`text-xs ${length > 0 && length < MIN_CONTENT ? 'text-orange-600' : 'text-stone-400'}`}>
-                {length} / {MAX_CONTENT}
-              </span>
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-4 h-4" aria-hidden />
-                {isSubmitting ? '등록 중...' : '익명으로 남기기'}
-              </button>
-            </div>
-          </div>
-        </form>
-      </section>
-
-      {/* 목록 */}
-      <section aria-label="문의 목록" className="space-y-3">
-        {items.length === 0 ? (
-          <p className="text-center text-stone-700 font-bold bg-white/70 rounded-2xl py-10">
-            아직 문의가 없어요. 첫 번째로 남겨 보세요! 🌰
-          </p>
-        ) : (
-          items.map((item) => (
-            <article key={item.id} className="bg-white/90 backdrop-blur-sm border border-white/60 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className={`px-2.5 py-1 rounded-md text-xs font-black ${CATEGORY_STYLES[item.category]}`}>
-                  {item.category}
-                </span>
-                <time dateTime={item.createdAt} className="text-xs text-stone-400">
-                  {formatKst(item.createdAt)}
-                </time>
-              </div>
-
-              <p className="text-[15px] text-stone-700 leading-relaxed whitespace-pre-wrap break-words">{item.content}</p>
-
-              <div className="flex items-center gap-2 mt-4">
+        {formOpen && (
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4 animate-fade-in">
+            <div role="radiogroup" aria-label="문의 분류" className="flex flex-wrap gap-2">
+              {INQUIRY_CATEGORIES.map((c) => (
                 <button
+                  key={c}
                   type="button"
-                  aria-pressed={item.mine === 'up'}
-                  aria-label={`좋아요 ${item.up}개`}
-                  disabled={reactingId === item.id}
-                  onClick={() => handleReact(item.id, 'up')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-bold transition-colors disabled:opacity-60 ${
-                    item.mine === 'up'
-                      ? 'bg-amber-600 text-white border-amber-600'
+                  role="radio"
+                  aria-checked={category === c}
+                  onClick={() => setCategory(c)}
+                  className={`px-4 py-2 rounded-full text-sm font-bold border transition-colors ${
+                    category === c
+                      ? 'bg-amber-700 text-white border-amber-700'
                       : 'bg-white text-stone-600 border-stone-200 hover:border-amber-300'
                   }`}
                 >
-                  <ThumbsUp className="w-4 h-4" aria-hidden />
-                  {item.up}
+                  {c}
                 </button>
+              ))}
+            </div>
+
+            <div>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={MAX_TITLE}
+                placeholder="제목"
+                aria-label="제목"
+                className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-[15px] font-bold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-200/50 transition"
+              />
+              <p className="text-right text-xs text-stone-400 mt-1">
+                {titleLength} / {MAX_TITLE}
+              </p>
+            </div>
+
+            <div>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                maxLength={MAX_CONTENT}
+                rows={5}
+                placeholder="내용을 입력해 주세요"
+                aria-label="문의 내용"
+                className="w-full resize-y rounded-2xl border border-stone-200 bg-white p-4 text-[15px] leading-relaxed outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-200/50 transition"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className={`text-sm ${submitHint ? 'text-orange-600 font-bold' : 'text-stone-400'}`}>
+                  {submitHint ?? `${contentLength} / ${MAX_CONTENT}`}
+                </span>
                 <button
-                  type="button"
-                  aria-pressed={item.mine === 'down'}
-                  aria-label={`싫어요 ${item.down}개`}
-                  disabled={reactingId === item.id}
-                  onClick={() => handleReact(item.id, 'down')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-bold transition-colors disabled:opacity-60 ${
-                    item.mine === 'down'
-                      ? 'bg-stone-700 text-white border-stone-700'
-                      : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
-                  }`}
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ThumbsDown className="w-4 h-4" aria-hidden />
-                  {item.down}
+                  <Send className="w-4 h-4" aria-hidden />
+                  {isSubmitting ? '등록 중...' : '등록하기'}
                 </button>
               </div>
-            </article>
-          ))
-        )}
-
-        {nextCursor && (
-          <button
-            type="button"
-            onClick={handleLoadMore}
-            disabled={isLoadingMore}
-            className="w-full py-3 bg-white/80 hover:bg-white text-amber-900 font-bold rounded-xl border border-amber-200 transition-colors disabled:opacity-60"
-          >
-            {isLoadingMore ? '불러오는 중...' : '더 보기'}
-          </button>
+            </div>
+          </form>
         )}
       </section>
+
+      {/* 목록 */}
+      <div ref={listTopRef} className="scroll-mt-20 space-y-3">
+        <ListControls category={params.category} sort={params.sort} disabled={isLoading} onChange={changeParams} />
+
+        <section
+          aria-label="문의 목록"
+          aria-busy={isLoading}
+          className={`bg-white/90 backdrop-blur-sm border border-white/60 rounded-2xl shadow-sm overflow-hidden transition-opacity ${
+            isLoading ? 'opacity-60' : ''
+          }`}
+        >
+          <p className="px-4 py-2.5 text-xs font-bold text-stone-500 border-b border-stone-100">총 {data.total}건</p>
+
+          {data.items.length === 0 ? (
+            <p className="text-center text-stone-500 font-bold py-12">아직 문의가 없어요. 첫 번째로 남겨 보세요! 🌰</p>
+          ) : (
+            <ul className="divide-y divide-stone-100">
+              {data.items.map((item) => {
+                const open = expandedId === item.id;
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      aria-expanded={open}
+                      onClick={() => setExpandedId(open ? null : item.id)}
+                      className="w-full flex items-center gap-2 sm:gap-3 px-4 py-3.5 text-left hover:bg-amber-50/60 transition-colors"
+                    >
+                      <CategoryBadge category={item.category} />
+                      <span className="flex-1 min-w-0 truncate font-bold text-stone-800 text-[15px]">{item.title}</span>
+                      <StatusBadge status={item.status} />
+                      <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-stone-500">
+                        <ThumbsUp className="w-3.5 h-3.5" aria-hidden />
+                        {item.up}
+                      </span>
+                      <time dateTime={item.createdAt} className="hidden sm:block text-xs text-stone-400 w-10 text-right">
+                        {formatKstDate(item.createdAt)}
+                      </time>
+                      <ChevronDown
+                        className={`w-4 h-4 text-stone-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+
+                    {open && (
+                      <div className="px-4 pb-4 animate-fade-in">
+                        <div className="bg-stone-50 rounded-xl p-4">
+                          <time dateTime={item.createdAt} className="block text-xs text-stone-400 mb-2">
+                            {formatKstDateTime(item.createdAt)}
+                          </time>
+                          <p className="text-[15px] text-stone-700 leading-relaxed whitespace-pre-wrap break-words">
+                            {item.content}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            type="button"
+                            aria-pressed={item.mine === 'up'}
+                            aria-label={`좋아요 ${item.up}개`}
+                            disabled={reactingId === item.id}
+                            onClick={() => handleReact(item.id, 'up')}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-bold transition-colors disabled:opacity-60 ${
+                              item.mine === 'up'
+                                ? 'bg-amber-600 text-white border-amber-600'
+                                : 'bg-white text-stone-600 border-stone-200 hover:border-amber-300'
+                            }`}
+                          >
+                            <ThumbsUp className="w-4 h-4" aria-hidden />
+                            {item.up}
+                          </button>
+                          <button
+                            type="button"
+                            aria-pressed={item.mine === 'down'}
+                            aria-label={`싫어요 ${item.down}개`}
+                            disabled={reactingId === item.id}
+                            onClick={() => handleReact(item.id, 'down')}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-bold transition-colors disabled:opacity-60 ${
+                              item.mine === 'down'
+                                ? 'bg-stone-700 text-white border-stone-700'
+                                : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+                            }`}
+                          >
+                            <ThumbsDown className="w-4 h-4" aria-hidden />
+                            {item.down}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <Pagination page={data.page} totalPages={data.totalPages} disabled={isLoading} onChange={changePage} />
+      </div>
     </div>
   );
 }

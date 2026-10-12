@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { GuildMember, MemberPatch, NewMemberInput } from './types';
 import { getDaysSinceLastPromotion, getPromotionInfo } from './utils';
-import { Lock, Gamepad2, RefreshCw, Trophy } from 'lucide-react';
+import { Lock, Gamepad2, RefreshCw, Trophy, MessageSquare  } from 'lucide-react';
 import Link from 'next/link';
 import AdminStats from './components/AdminStats';
 import AdminMemberForm from './components/AdminMemberForm';
@@ -136,6 +136,13 @@ export default function AdminDashboard() {
             >
               <Trophy className="w-4 h-4" />
               이벤트 점수판
+            </Link>
+            <Link
+              href="/admin/inquiries"
+              className="flex items-center gap-2 px-4 py-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 font-bold rounded-xl border border-sky-500/20 transition-all"
+            >
+              <MessageSquare className="w-4 h-4" />
+              익명 문의 관리
             </Link>
             <Link
               href="/admin/game"
