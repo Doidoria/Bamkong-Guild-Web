@@ -4,14 +4,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Box, ChevronUp, ChevronDown, Package, Lock, Store } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/app/lib/firebase';
 import { useBamkongGrowth } from '../hooks/useBamkongGrowth';
 import { INVENTORY_ITEMS, InventoryItem } from './constants/inventory';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIsAdmin } from '../actions';
 import { toast } from 'sonner';
-import { giveGameUserPoints } from '@/app/admin/game/actions';
+import {
+  adminResetSkins,
+  adminSetRoomItems,
+  adminUnlockAllSkins,
+  giveGameUserPoints,
+} from '@/app/admin/game/actions';
+import { claimLevelReward, equipSkin, loadRoom, saveRoomLayout } from './roomActions';
 import Link from 'next/link';
 import IsometricItem from './components/IsometricItem';
 import RoamingCharacter from './components/RoamingCharacter';
@@ -25,6 +29,9 @@ interface RoomItem {
   yPos: number;
 }
 
+const findItem = (itemId: string): InventoryItem | null =>
+    INVENTORY_ITEMS.find((item) => item.id === itemId) ?? null;
+
 export default function BamkongRoomPage() {
   const router = useRouter();
   const [placedItems, setPlacedItems] = useState<RoomItem[]>([]);
@@ -34,7 +41,6 @@ export default function BamkongRoomPage() {
   const [ownedItems, setOwnedItems] = useState<string[]>([]); // 보유한 가구 목록 상태
   const [rewardItem, setRewardItem] = useState<InventoryItem | null>(null);
   const [claimedLevelRewards, setClaimedLevelRewards] = useState<number[]>([]); // 이미 수령한 레벨 기록
-  const [pendingRewardLevel, setPendingRewardLevel] = useState<number | null>(null); // 현재 모달로 까고 있는 상자의 레벨
   const { user, level, isEvolved, evolutionId } = useBamkongGrowth();
 
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
@@ -54,6 +60,7 @@ export default function BamkongRoomPage() {
   }, [isEvolved, evolutionId]);
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   useEffect(() => {
     getIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
@@ -65,128 +72,84 @@ export default function BamkongRoomPage() {
   
   const roomRef = useRef<HTMLElement>(null);
 
-  const syncAdminActionToDB = async (newOwned: string[], newPlaced: any[]) => {
+  // 관리자 패널: 보유/배치 강제 설정 (서버에서 관리자 검증)
+  const syncAdminActionToDB = async (newOwned: string[], newPlaced: RoomItem[]) => {
     if (!user?.id) return;
-    try {
-      const roomDocRef = doc(db, 'bamkong_rooms', user.id);
-      await setDoc(roomDocRef, { 
-        ownedItems: newOwned,
-        placedItems: newPlaced 
-      }, { merge: true });
-    } catch (error) {
-      console.error('관리자 권한 DB 동기화 실패:', error);
-    }
+    const result = await adminSetRoomItems(user.id, newOwned, newPlaced);
+    if (!result.ok) toast.error(result.message);
   };
 
+  // 방 데이터 로드 (첫 방문이면 서버가 랜덤 가구를 지급하고 연출용 ID를 돌려줌)
   useEffect(() => {
-    const loadRoomData = async () => {
-      if (!user?.id) return;
-      try {
-        const roomDocRef = doc(db, 'bamkong_rooms', user.id);
-        const roomSnap = await getDoc(roomDocRef);
-        
-        if (roomSnap.exists()) {
-          const data = roomSnap.data();
-          setOwnedItems(data.ownedItems || []); // DB에서 보유 가구 불러오기
-          setClaimedLevelRewards(data.claimedLevelRewards || []); // DB에서 레벨 보상 수령 기록 가져오기
-          
-          if (data.placedItems) {
-            const formattedItems = data.placedItems.map((item: string | RoomItem) => {
-              if (typeof item === 'string') {
-                const defaultData = INVENTORY_ITEMS.find(i => i.id === item);
-                return { id: item, xPos: defaultData?.xPos || 50, yPos: defaultData?.yPos || 50 };
-              }
-              return item;
-            });
-            setPlacedItems(formattedItems);
-          } else {
-            setPlacedItems([]); // 가구 없는 상태로 시작
-          }
+    if (!user?.id) return;
+    let cancelled = false;
 
-          // 보유한 가구가 아예 없다면(첫 접속) 랜덤 상자 지급
-          if (!data.ownedItems || data.ownedItems.length === 0) {
-            triggerFirstRandomBox(); 
-          }
-          if (data.unlockedSkins) setUnlockedSkins(data.unlockedSkins);
-          if (data.equippedSkin) setCurrentSkin(data.equippedSkin);
-        } else {
-          setPlacedItems([]);
-          triggerFirstRandomBox(); 
+    (async () => {
+      try {
+        const result = await loadRoom();
+        if (cancelled) return;
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        const room = result.data;
+        setOwnedItems(room.ownedItems);
+        setClaimedLevelRewards(room.claimedLevelRewards);
+        setPlacedItems(room.placedItems);
+        if (room.unlockedSkins.length > 0) setUnlockedSkins(room.unlockedSkins);
+        if (room.equippedSkin !== null) setCurrentSkin(room.equippedSkin);
+
+        if (room.firstBoxItemId) {
+          const item = findItem(room.firstBoxItemId);
+          if (item) setRewardItem(item);
         }
       } catch (error) {
         console.error('방 데이터 불러오기 실패:', error);
+        toast.error('방 데이터를 불러오지 못했습니다.');
       } finally {
-        setIsInitialLoading(false);
+        if (!cancelled) setIsInitialLoading(false);
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    loadRoomData();
   }, [user?.id]);
 
-  // 첫 방문 랜덤 가구 상자 지급 함수
-  const triggerFirstRandomBox = () => {
-    const randomItem = INVENTORY_ITEMS[Math.floor(Math.random() * INVENTORY_ITEMS.length)];
-    setRewardItem(randomItem); 
-  };
-
-  // 현재 레벨을 기준으로 받을 수 있는 10단위 보상 레벨 도출 (예: 25렙이면 [10, 20])
+  // 받을 수 있는 레벨 보상 (버튼 표시용, 실제 판정은 서버)
   const pendingMilestones = useMemo(() => {
-    const milestones = [];
-    
+    const milestones: number[] = [];
     for (let i = 110; i <= Math.min(level, 200); i += 10) {
-      if (!claimedLevelRewards.includes(i)) {
-        milestones.push(i);
-      }
+      if (!claimedLevelRewards.includes(i)) milestones.push(i);
     }
     return milestones;
   }, [level, claimedLevelRewards]);
 
-  // 10레벨 달성 보상 상자 열기 (중복 없음)
-  const handleOpenLevelReward = () => {
-    if (pendingMilestones.length === 0) return;
-    const targetLevel = pendingMilestones[0];
-
-    // 핵심 로직: 전체 가구 중 내가 보유하지 않은(중복 아닌) 가구만 필터링
-    const unownedItems = INVENTORY_ITEMS.filter(item => !ownedItems.includes(item.id));
-
-    if (unownedItems.length === 0) {
-      toast('모든 가구와 아이템을 다 모으셨습니다! 🎉');
-      return;
+  // 레벨 보상 상자: 서버가 미보유 가구 중 랜덤으로 지급 → 연출만 클라이언트
+  const handleOpenLevelReward = async () => {
+    if (pendingMilestones.length === 0 || isClaiming) return;
+    setIsClaiming(true);
+    try {
+      const result = await claimLevelReward();
+      if (!result.ok) {
+        toast(result.message);
+        return;
+      }
+      setOwnedItems(result.data.ownedItems);
+      setClaimedLevelRewards(result.data.claimedLevelRewards);
+      const item = findItem(result.data.itemId);
+      if (item) setRewardItem(item);
+    } catch (error) {
+      console.error('레벨 보상 수령 실패:', error);
+      toast.error('서버와 통신하지 못했습니다.');
+    } finally {
+      setIsClaiming(false);
     }
-
-    // 안 가진 가구 중에서만 랜덤 픽
-    const randomItem = unownedItems[Math.floor(Math.random() * unownedItems.length)];
-    
-    setPendingRewardLevel(targetLevel);
-    setRewardItem(randomItem); 
   };
 
-  // 상자 애니메이션 시청 후 '방 꾸미기 시작' 눌렀을 때 DB 최종 저장
-  const handleClaimReward = async () => {
-    if (!user?.id || !rewardItem) return;
-    
-    const roomDocRef = doc(db, 'bamkong_rooms', user.id);
-    
-    // 새 가구 추가 (중복을 방지하기 위해 Set 활용 후 배열 변환)
-    const newOwnedItems = Array.from(new Set([...ownedItems, rewardItem.id]));
-    
-    // 레벨 보상이었다면 수령 기록 추가
-    let newClaimed = claimedLevelRewards;
-    if (pendingRewardLevel !== null) {
-      newClaimed = [...claimedLevelRewards, pendingRewardLevel];
-    }
-    
-    setOwnedItems(newOwnedItems);
-    setClaimedLevelRewards(newClaimed);
-    
-    // DB 최종 병합 저장
-    await setDoc(roomDocRef, { 
-      placedItems, // 현재 배치 상태 유지
-      ownedItems: newOwnedItems,
-      claimedLevelRewards: newClaimed
-    }, { merge: true });
-
-    setRewardItem(null); 
-    setPendingRewardLevel(null);
+  // 상자 연출 닫기 (저장은 이미 서버에서 완료됨)
+  const handleClaimReward = () => {
+    setRewardItem(null);
   };
 
   const toggleItemPlacement = (itemId: string) => {
@@ -213,43 +176,49 @@ export default function BamkongRoomPage() {
     }
   };
 
-  // 옷 갈아입기 및 Firebase DB 자동 저장 함수
+    // 옷 갈아입기: 화면 먼저 바꾸고, 서버에서 거절되면 되돌림
   const handleEquipSkin = async (skinId: number) => {
-    setCurrentSkin(skinId); 
-    
+    const prevSkin = currentSkin;
+    setCurrentSkin(skinId);
+
     // 파티클 이펙트 On -> 1.5초 후 Off
     setShowEquipEffect(true);
     setTimeout(() => setShowEquipEffect(false), 1500);
-    
-    if (user?.id) {
-      try {
-        const roomDocRef = doc(db, 'bamkong_rooms', user.id);
-        await setDoc(roomDocRef, { equippedSkin: skinId }, { merge: true });
-      } catch (error) {
-        console.error('스킨 장착 저장 실패:', error);
+
+    try {
+      const result = await equipSkin(skinId);
+      if (!result.ok) {
+        setCurrentSkin(prevSkin);
+        toast.error(result.message);
       }
+    } catch (error) {
+      console.error('스킨 장착 저장 실패:', error);
+      setCurrentSkin(prevSkin);
+      toast.error('서버와 통신하지 못했습니다.');
     }
   };
 
-  const handleAdminUnlockAllSkins = async () => {
+    const handleAdminUnlockAllSkins = async () => {
     if (!user?.id) return;
-    const allSkins = Array.from({ length: 10 }, (_, i) => i + 1);
-    
-    setUnlockedSkins(allSkins);
-    await setDoc(doc(db, 'bamkong_rooms', user.id), { unlockedSkins: allSkins }, { merge: true });
-    toast.success('모든 외형(1~10번)이 성공적으로 해금되었습니다! ✨');
+    const result = await adminUnlockAllSkins(user.id);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    setUnlockedSkins(result.data);
+    toast.success(`모든 외형(1~${result.data.length}번)이 성공적으로 해금되었습니다! ✨`);
   };
 
-  // 관리자용: 외형 강제 초기화 함수 (기본 진화형 1개로 롤백)
+  // 관리자용: 외형 강제 초기화 (기본 진화형 1개로 롤백)
   const handleAdminResetSkins = async () => {
-    if (!user?.id || !evolutionId) return;
-    
-    setUnlockedSkins([evolutionId]);
-    setCurrentSkin(evolutionId);
-    await setDoc(doc(db, 'bamkong_rooms', user.id), { 
-      unlockedSkins: [evolutionId], 
-      equippedSkin: evolutionId 
-    }, { merge: true });
+    if (!user?.id) return;
+    const result = await adminResetSkins(user.id);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    setUnlockedSkins([result.data]);
+    setCurrentSkin(result.data);
     toast.info('외형이 기본 진화형으로 초기화되었습니다. 🔄');
   };
 
@@ -259,14 +228,17 @@ export default function BamkongRoomPage() {
     );
   };
 
-  const handleSaveRoom = async () => {
+    const handleSaveRoom = async () => {
     if (!user?.id) return;
 
     setIsSaving(true);
     try {
-      const roomDocRef = doc(db, 'bamkong_rooms', user.id);
-      await setDoc(roomDocRef, { placedItems }, { merge: true });
-      
+      const result = await saveRoomLayout(placedItems);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      setPlacedItems(result.data);
       toast.success('밤콩이의 방이 예쁘게 저장되었습니다! 🌰');
     } catch (error) {
       console.error('방 저장 실패:', error);
@@ -332,10 +304,11 @@ export default function BamkongRoomPage() {
       {pendingMilestones.length > 0 && (
         <button
           onClick={handleOpenLevelReward}
-          className="absolute top-24 right-6 z-[60] flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-5 py-3 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.5)] animate-bounce font-black border-2 border-white/20 transition-transform hover:scale-105"
+          disabled={isClaiming}
+          className="absolute top-24 right-6 z-[60] flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-60 text-white px-5 py-3 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.5)] animate-bounce font-black border-2 border-white/20 transition-transform hover:scale-105"
         >
           <Package className="w-5 h-5" />
-          Lv.{pendingMilestones[0]} 달성 보상 열기!
+          {isClaiming ? '상자 여는 중...' : `Lv.${pendingMilestones[0]} 달성 보상 열기!`}
         </button>
       )}
 

@@ -17,6 +17,12 @@ import {
   type BamkongUser,
   type GameUserPatch,
 } from './types';
+import { MAX_SKIN_ID } from '@/app/game/growthConfig';
+import {
+  sanitizeOwnedItems,
+  sanitizePlacedItems,
+  type RoomItemPosition,
+} from '@/app/game/room/roomValidation';
 
 const GROWTH = 'bamkong_growth';
 const ROOMS = 'bamkong_rooms';
@@ -149,5 +155,49 @@ export async function giveGameUserPoints(userId: string, amount: number): Promis
     const { growth } = refs(userId);
     await commitExisting(() => growth.update({ gamePoints: FieldValue.increment(amount) }));
     return amount;
+  });
+}
+
+// ───────────── 방 관리 (관리자 패널) ─────────────
+
+/** 보유 가구 + 배치 강제 설정 (보유하지 않은 가구의 배치는 자동 제외) */
+export async function adminSetRoomItems(
+  userId: string,
+  ownedItems: string[],
+  placedItems: RoomItemPosition[],
+): Promise<ActionResult<null>> {
+  return run(async () => {
+    const owned = sanitizeOwnedItems(ownedItems);
+    const ownedSet = new Set(owned);
+    const placedInput = Array.isArray(placedItems)
+      ? placedItems.filter((item) => ownedSet.has((item as { id?: string })?.id ?? ''))
+      : [];
+    const placed = sanitizePlacedItems(placedInput, owned);
+
+    const { room } = refs(userId);
+    await room.set({ ownedItems: owned, placedItems: placed }, { merge: true });
+    return null;
+  });
+}
+
+/** 외형 전체 해금 (1 ~ MAX_SKIN_ID) */
+export async function adminUnlockAllSkins(userId: string): Promise<ActionResult<number[]>> {
+  return run(async () => {
+    const all = Array.from({ length: MAX_SKIN_ID }, (_, i) => i + 1);
+    const { room } = refs(userId);
+    await room.set({ unlockedSkins: all }, { merge: true });
+    return all;
+  });
+}
+
+/** 외형 초기화: 기본 진화형 1개만 남기고 장착 */
+export async function adminResetSkins(userId: string): Promise<ActionResult<number>> {
+  return run(async () => {
+    const { growth, room } = refs(userId);
+    const evolutionId = (await growth.get()).get('evolutionId');
+    if (typeof evolutionId !== 'number') throw new ValidationError('진화 전 계정은 외형을 초기화할 수 없습니다.');
+
+    await room.set({ unlockedSkins: [evolutionId], equippedSkin: evolutionId }, { merge: true });
+    return evolutionId;
   });
 }

@@ -53,6 +53,9 @@ export type ScoreGameId = keyof typeof SCORE_GAMES;
 // ───── 진화 ─────
 export const EVOLUTION_IDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
+/** 옷장 외형 최대 번호 (관리자 '전체 해금' 기준, 기존 1~10번 유지) */
+export const MAX_SKIN_ID = 10;
+
 // ───── 상점 (화면과 서버가 같은 목록 사용) ─────
 export interface ApShopItem {
   id: string;
