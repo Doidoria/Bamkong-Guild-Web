@@ -61,8 +61,8 @@ export default function GamePage() {
     prevLevelRef.current = level;
   }, [level, isLoading]);
 
-    const handleAction = async (type: GrowthActionId) => {
-    if (await gainExp(type)) {
+  const handleAction = (type: GrowthActionId) => {
+    if (gainExp(type)) {
       setActionType(type);
       setTimeout(() => setActionType('none'), 1500);
     }

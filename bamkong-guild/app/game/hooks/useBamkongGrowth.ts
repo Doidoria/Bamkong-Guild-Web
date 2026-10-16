@@ -13,7 +13,10 @@ import {
 } from '../growthActions';
 import {
   AP_RECHARGE_MS,
+  EVOLUTION_LEVEL,
+  GROWTH_ACTIONS,
   MAX_AP,
+  MAX_LEVEL,
   getMaxExp,
   type DailyMinigameId,
   type GrowthActionId,
@@ -141,16 +144,70 @@ export function useBamkongGrowth() {
     [applySnapshot],
   );
 
+  // 화면은 즉시 반영하고, 서버 확정값은 진행 중인 요청이 모두 끝난 뒤 한 번에 맞춤
+  const inFlightRef = useRef(0);
+  const bestSnapshotRef = useRef<GrowthSnapshot | null>(null);
+  const hadFailureRef = useRef(false);
+
+  const settleGrowth = useCallback(async () => {
+    const snapshot = bestSnapshotRef.current;
+    const hadFailure = hadFailureRef.current;
+    bestSnapshotRef.current = null;
+    hadFailureRef.current = false;
+
+    if (hadFailure) {
+      // 실패가 섞이면 화면 값이 서버와 다를 수 있으므로 서버 기준으로 다시 맞춤
+      const data = await callAction(() => loadGrowth());
+      if (data) applySnapshot(data.growth);
+      return;
+    }
+    if (snapshot) applySnapshot(snapshot);
+  }, [applySnapshot]);
+
   const gainExp = useCallback(
-    async (actionId: GrowthActionId): Promise<boolean> => {
+    (actionId: GrowthActionId): boolean => {
       if (!user) {
         toast.error('로그인이 필요합니다!');
         window.location.href = '/api/auth/signin/discord';
         return false;
       }
-      return (await runMutation(() => gainExpAction(actionId))) !== null;
+
+      const { exp: amount, cost } = GROWTH_ACTIONS[actionId];
+      if (level >= MAX_LEVEL || (level >= EVOLUTION_LEVEL && !isEvolved) || ap < cost) return false;
+
+      // 1) 서버와 같은 규칙으로 즉시 계산해서 화면에 반영
+      const maxExpNow = getMaxExp(level);
+      let nextExp = exp + amount;
+      let nextLevel = level;
+      if (nextExp >= maxExpNow) {
+        nextLevel = Math.min(MAX_LEVEL, level + 1);
+        nextExp = nextLevel === MAX_LEVEL ? 0 : nextExp - maxExpNow;
+      }
+      if (ap >= MAX_AP) lastActionRef.current = Date.now();
+      setAp(ap - cost);
+      setExp(nextExp);
+      setLevel(nextLevel);
+
+      // 2) 서버 확정은 기다리지 않고 뒤에서 처리
+      inFlightRef.current += 1;
+      void (async () => {
+        const data = await callAction(() => gainExpAction(actionId));
+        if (data) {
+          // 응답 순서가 뒤바뀌어도 가장 진행된 상태를 채택 (성장은 레벨·경험치가 줄지 않음)
+          const progress = (s: GrowthSnapshot) => s.level * 1000 + s.exp;
+          const best = bestSnapshotRef.current;
+          if (!best || progress(data.growth) >= progress(best)) bestSnapshotRef.current = data.growth;
+        } else {
+          hadFailureRef.current = true;
+        }
+
+        inFlightRef.current -= 1;
+        if (inFlightRef.current === 0) void settleGrowth();
+      })();
+
+      return true;
     },
-    [user, runMutation],
+    [user, level, exp, ap, isEvolved, settleGrowth],
   );
 
   const handleMinigamePlay = useCallback(
