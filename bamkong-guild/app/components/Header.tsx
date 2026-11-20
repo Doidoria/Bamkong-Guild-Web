@@ -8,6 +8,8 @@ import { MessageCircle } from 'lucide-react';
 const NAV_LINKS = [
   { href: '#about', label: '길드 소개' },
   { href: '#skills', label: '길드 스킬' },
+  { href: '#album', label: '추억 앨범' },
+  { href: '#weekend', label: '타게임' },
 ] as const;
 
 function subscribeScroll(callback: () => void) {
@@ -21,33 +23,35 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 border-b backdrop-blur-md transition-[background-color,box-shadow,border-color] duration-300 ${
-        scrolled ? 'bg-white/80 border-amber-100/70 shadow-md' : 'bg-white/30 border-white/20'
+      className={`fixed top-0 inset-x-0 z-50 border-b backdrop-blur-xl transition-[background-color,border-color] duration-300 ${
+        scrolled ? 'bg-[#0f0d0b]/80 border-white/[0.06]' : 'bg-transparent border-transparent'
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 md:h-[72px] flex items-center justify-between gap-3">
         <Link href="/" className="shrink-0" aria-label="밤콩 길드 홈">
-          <img src="/images/logo.png" alt="" className="h-9 sm:h-10 w-auto object-contain bg-amber-100/20 rounded-lg" />
+          <img src="/images/logo.png" alt="" className="h-9 sm:h-10 w-auto object-contain" />
         </Link>
 
-        <nav className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-bold text-stone-700 whitespace-nowrap">
+        {/* 모바일에선 공간이 좁아 앵커 메뉴는 md 이상에서만 노출 */}
+        <nav aria-label="메인 메뉴" className="hidden md:flex items-center gap-1 text-[15px] whitespace-nowrap">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-amber-100/70 hover:text-amber-800 transition-colors"
+              className="px-3.5 py-2.5 rounded-xl text-stone-300 hover:text-white hover:bg-white/[0.06] transition-colors"
             >
               {link.label}
             </a>
           ))}
-          <a
-            href="#contact"
-            className="ml-1 inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full bg-amber-700 hover:bg-amber-600 text-white shadow-md transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" aria-hidden />
-            오픈 카톡
-          </a>
         </nav>
+
+        <a
+          href="#contact"
+          className="inline-flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl bg-[#fee500] hover:bg-[#ffeb3b] text-[#191600] text-[15px] transition-colors"
+        >
+          <MessageCircle className="w-[18px] h-[18px]" aria-hidden />
+          오픈 카톡
+        </a>
       </div>
     </header>
   );

@@ -1,7 +1,8 @@
 // app/components/GuildSkills.tsx
 'use client';
-import React, { useState } from 'react';
-import { ChevronDown, Sparkles } from 'lucide-react';
+
+import { useId, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 // 스킬 이미지 목록: 추가·삭제는 여기만 수정
 const SKILL_IMAGES = [
@@ -12,55 +13,45 @@ const SKILL_IMAGES = [
 
 export default function GuildSkills() {
   const [isOpen, setIsOpen] = useState(false);
+  const panelId = useId();
 
   return (
-    <section id="skills" className="max-w-5xl mx-auto px-6 mb-36 relative z-10 scroll-mt-50">
-      <div className="bg-white/90 border border-amber-200/60 rounded-[2rem] shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+    <section id="skills" className="scroll-mt-24 max-w-6xl mx-auto px-6 pt-16 md:pt-20 pb-10">
+      <div className="rounded-[2rem] bg-[#15120f] border border-white/[0.07] overflow-hidden">
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen((prev) => !prev)}
           aria-expanded={isOpen}
-          className="w-full p-6 md:p-8 flex items-center justify-between text-left hover:bg-amber-50/60 transition-colors group cursor-pointer"
+          aria-controls={panelId}
+          className="group w-full flex items-center justify-between gap-4 p-7 md:px-10 md:py-8 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
         >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-100 rounded-2xl text-amber-700 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl md:text-2xl font-black text-stone-800">
-                밤콩 길드 스킬 현황
-              </h3>
-              <p className="text-sm text-stone-500 font-medium mt-1">
-                {isOpen ? '클릭하여 스킬 안내를 접습니다.' : '클릭하여 현재 적용 중인 길드 스킬을 확인해 보세요!'}
-              </p>
-            </div>
-          </div>
-          
-          <div className="p-2 rounded-full bg-amber-100/50 text-amber-700 group-hover:bg-amber-200/50 transition-colors">
-            <ChevronDown
-              className={`w-6 h-6 transition-transform duration-300 ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
+          <span>
+            <span className="block text-sm tracking-[0.14em] text-amber-400">04 · SKILLS</span>
+            <span className="block mt-2 text-[28px] md:text-[34px] leading-tight text-white">밤콩 길드 스킬 현황</span>
+            <span className="block mt-1.5 text-[15px] text-stone-400">
+              {isOpen ? '클릭하여 스킬 안내를 접습니다.' : '클릭하여 현재 적용 중인 길드 스킬을 확인해 보세요!'}
+            </span>
+          </span>
+          <span className="shrink-0 inline-flex w-12 h-12 rounded-full bg-amber-400/12 group-hover:bg-amber-400/20 text-amber-400 items-center justify-center transition-colors">
+            <ChevronDown className={`w-6 h-6 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} aria-hidden />
+          </span>
         </button>
 
-        {/* 아코디언 본문 */}
         {isOpen && (
-          <div className="p-6 md:p-8 border-t border-amber-100 bg-amber-50/30 flex flex-col items-center gap-6 animate-fade-in">
-            <p className="text-stone-700 font-bold text-center break-keep bg-white/80 px-4 py-2 rounded-full border border-amber-200/50 text-sm md:text-base">
+          <div id={panelId} className="px-7 pb-7 md:px-10 md:pb-10 animate-fade-in">
+            <p className="mb-6 px-5 py-4 rounded-2xl bg-amber-400/[0.08] text-amber-200 text-[15px] leading-relaxed break-keep">
               ✨ 밤콩 길드는 길드원 분들의 쾌적한 플레이를 위해 주요 길드 스킬을 지속해서 유지/강화하고 있습니다!
             </p>
-            
-            {/* 스킬 이미지: 2열, 홀수 개일 때 마지막 이미지는 가운데 정렬 */}
-            <div className="w-full max-w-4xl flex flex-wrap justify-center gap-4 md:gap-6">
+            {/* 2열, 홀수 개일 때 마지막 이미지는 가운데 정렬 */}
+            <div className="flex flex-wrap justify-center gap-4">
               {SKILL_IMAGES.map((image) => (
-                <div
+                <img
                   key={image.src}
-                  className="w-full md:w-[calc(50%-0.75rem)] rounded-2xl overflow-hidden border border-amber-200/80 shadow-md bg-white p-2 hover:-translate-y-1 transition-transform duration-300"
-                >
-                  <img src={image.src} alt={image.alt} className="w-full h-auto object-contain rounded-xl" />
-                </div>
+                  src={image.src}
+                  alt={image.alt}
+                  loading="lazy"
+                  className="w-full md:w-[calc(50%-0.5rem)] h-auto rounded-2xl border border-white/[0.08]"
+                />
               ))}
             </div>
           </div>
