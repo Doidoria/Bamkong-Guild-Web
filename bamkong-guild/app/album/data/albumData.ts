@@ -88,9 +88,10 @@ export const ALBUM_DATA = [
   { 
     id: 9, 
     title: '길드 점령전', 
-    date: '2026.09.19', 
+    date: '2026.11.07', 
     desc: '밤콩 길드원들과 신나는 즐겜 점령전!',
     images: [
+      '/images/albumgallery/album-9-1.png',
       '/images/albumgallery/album-9.png',
     ], 
   },

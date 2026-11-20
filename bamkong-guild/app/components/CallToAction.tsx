@@ -37,7 +37,7 @@ export default function CallToAction() {
 
         <div className="p-6 md:p-7 rounded-3xl bg-[#0f0d0b] border border-amber-400/25">
           <h3 className="mb-1.5 text-xl text-amber-400">
-            <span aria-hidden>📋</span> 가입 양식 안내
+            가입 양식 안내
           </h3>
           <p className="mb-4 text-sm text-stone-400 break-keep">원활한 가입 진행을 위해 아래 양식을 복사한 뒤 오픈톡방에 남겨주세요!</p>
           {/* select-all: 복사 실패 시 길게 눌러 한 번에 선택 가능 */}

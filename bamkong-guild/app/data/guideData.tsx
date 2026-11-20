@@ -75,7 +75,7 @@ export const RULES: InfoItem[] = [
   { label: '따돌림 금지', content: '특정 길드원을 소외시키거나 놀리는 행동' },
 ];
 
-export const TAGS = ['#성인·친목', '#TTS완비', '#자율참여', '#뉴비·복귀환영'] as const;
+export const TAGS = ['#성인·친목', '#TTS완비', '#자율참여', '#뉴비·복귀환영', '#먼작귀 직접 제작 봇 탑제'] as const;
 
 export const WEEKEND_BANNER = {
   badge: 'WEEKEND PLAYZONE',
