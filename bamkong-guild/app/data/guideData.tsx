@@ -29,7 +29,7 @@ function WingIcon({ src, alt }: { src: string; alt: string }) {
 export const ABOUT_CARDS: AboutCard[] = [
   { icon: Moon, label: '길드 퀘스트', title: '밤 10시 고정!', description: '100% 자유 참여' },
   { icon: Flag, label: '길드 점령전', title: '자유롭게 참여', description: '투표로 결정해요' },
-  { icon: Fish, label: '비공정 낚시', title: '사전 공지 후', description: '투표로 유연하게 진행' },
+  { icon: Fish, label: '길드 낚시', title: '낚시 팜 제공', description: '길드원들과 옹기종기 낚시' },
   { icon: Map, label: '주력 맵', title: '이벤트 & 미션', description: '하코, 8인, 협동 등 모두 환영' },
   { icon: Gamepad2, label: '주말 타게임', title: '다 같이 달려요', description: '스팀 게임, 마피아, 파티 게임 등' },
   { icon: Sprout, label: '밤콩 온실', title: '밤콩 키우기', description: '디스코드 연동 길드원 전용 미니게임' },
