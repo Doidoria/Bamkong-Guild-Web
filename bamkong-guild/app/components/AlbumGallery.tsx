@@ -1,59 +1,60 @@
 // app/components/AlbumGallery.tsx
 'use client';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import { Images } from 'lucide-react';
 import PhotoModal from './PhotoModal';
 import { ALBUM_DATA } from '../album/data/albumData';
 
+export type AlbumPhoto = (typeof ALBUM_DATA)[number];
+
 export default function AlbumGallery() {
-  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<AlbumPhoto | null>(null);
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12 px-2 py-8">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 px-2 py-4">
         {ALBUM_DATA.map((photo, index) => {
-          const rotateClass = index % 2 === 0 ? '-rotate-2' : 'rotate-2';
-          const hoverRotate = index % 2 === 0 ? 'hover:rotate-1' : 'hover:-rotate-1';
+          const tilt = index % 2 === 0 ? '-rotate-2 hover:rotate-1' : 'rotate-2 hover:-rotate-1';
 
           return (
-            <div 
-              key={photo.id}
-              onClick={() => setSelectedPhoto(photo)}
-              className={`group cursor-pointer bg-[#faf8f5] p-4 pb-6 rounded-sm shadow-md hover:shadow-2xl hover:-translate-y-4 transition-all duration-500 ease-out border border-stone-200/80 flex flex-col relative ${rotateClass} ${hoverRotate} z-10 hover:z-20`}
-            >
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-5 bg-white/50 backdrop-blur-md border border-stone-200/50 shadow-sm -rotate-2 z-20"></div>
-              
-              <div className="aspect-[4/3] w-full overflow-hidden bg-stone-200 relative mb-5 shadow-inner border border-stone-100">
-                <div className="absolute inset-0 flex items-center justify-center text-stone-300">
-                  <span className="text-4xl animate-pulse">📸</span>
-                </div>
-                <img 
-                  src={photo.images[0]} 
-                  alt={photo.title} 
-                  className="w-full h-full object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
-                
-                {/* 2장 이상일 경우 우측 상단 배지 */}
-                {photo.images.length > 1 && (
-                  <div className="absolute top-2 right-2 z-30 bg-black/60 text-white/90 text-[11px] font-bold px-2 py-1 rounded-md backdrop-blur-sm border border-white/20">
-                    +{photo.images.length - 1}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-amber-900/0 group-hover:bg-amber-900/10 transition-colors duration-500 z-20 pointer-events-none"></div>
-              </div>
-              
-              <div className="px-2 text-center">
-                <h3 className="font-black text-stone-700 text-lg mb-1.5 group-hover:text-amber-700 transition-colors">{photo.title}</h3>
-                <p className="text-sm font-bold text-amber-600/80 tracking-widest">{photo.date}</p>
-              </div>
-            </div>
+            <li key={photo.id}>
+              {/* 폴라로이드 카드: 키보드로도 열 수 있도록 button */}
+              <button
+                type="button"
+                onClick={() => setSelectedPhoto(photo)}
+                className={`group relative w-full text-left p-4 pb-6 rounded-md bg-[#f5efe6] shadow-[0_20px_40px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_60px_rgba(0,0,0,0.6)] hover:-translate-y-2 transition duration-500 ease-out motion-reduce:transition-none outline-none focus-visible:ring-4 focus-visible:ring-amber-400/60 cursor-pointer ${tilt}`}
+              >
+                {/* 마스킹 테이프 */}
+                <span aria-hidden className="absolute -top-3 left-1/2 -translate-x-1/2 -rotate-2 w-16 h-5 bg-amber-200/70 shadow-sm" />
+
+                <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-sm bg-stone-300 mb-5">
+                  <Image
+                    src={photo.images[0]}
+                    alt={photo.title}
+                    fill
+                    sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
+                  />
+                  {photo.images.length > 1 && (
+                    <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-stone-900/70 backdrop-blur-sm text-white text-xs">
+                      <Images className="w-3.5 h-3.5" aria-hidden />+{photo.images.length - 1}
+                    </span>
+                  )}
+                </span>
+
+                <span className="block px-2 text-center">
+                  <span className="block mb-1 text-lg text-stone-800 group-hover:text-amber-800 transition-colors break-keep">{photo.title}</span>
+                  <span className="block text-sm tracking-widest text-amber-800/80">{photo.date}</span>
+                </span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      {selectedPhoto && (
-        <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
-      )}
+      {selectedPhoto && <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />}
     </>
   );
 }

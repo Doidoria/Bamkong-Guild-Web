@@ -1,8 +1,13 @@
 // app/games/page.tsx
-import React from 'react';
-import Link from 'next/link';
+import type { Metadata } from 'next';
 import Image from 'next/image';
-import { ExternalLink, ArrowLeft, Gamepad2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import SubPageShell from '../components/SubPageShell';
+
+export const metadata: Metadata = {
+  title: '밤콩 타게임 목록',
+  description: '주말엔 타게임도 다 같이! 밤콩 길드원들과 함께 즐기는 게임 목록',
+};
 
 interface OtherGame {
   id: number;
@@ -113,97 +118,64 @@ const OTHER_GAMES_DATA: OtherGame[] = [
 
 export default function OtherGamesPage() {
   return (
-    <div className="min-h-screen font-sans selection:bg-amber-200 overflow-x-hidden relative text-stone-800">
-        <div className="fixed inset-0 -z-20 bg-[url('/images/bg-mobile.jpg')] md:bg-[url('/images/bg-main.jpg')] bg-cover bg-top"></div>
-        <div className="fixed inset-0 bg-white/20 -z-10 pointer-events-none transform-gpu"></div>
-
-        <header className="fixed top-0 w-full z-50 bg-white/25 border-b border-stone-200/50 transition-colors">
-            <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 text-stone-600 hover:text-amber-700 font-bold transition-colors group">
-                <div className="bg-white/10 p-1.5 rounded-full group-hover:-translate-x-1 transition-transform">
-                <ArrowLeft className="w-5 h-5" />
-                </div>
-                <span className="hidden sm:inline">메인으로</span>
-            </Link>
-          
-          <div className="flex items-center gap-2 font-black text-stone-800 text-lg sm:text-xl">
-            밤콩 타게임 목록 <img src="/images/bamkong_game.png" alt="밤콩 게임" className="w-6 h-6 inline-block mb-1" />
-          </div>
-        </div>
-      </header>
-
-      {/* 🎮 메인 콘텐츠 */}
-      <main className="py-12 px-6 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-16">
-          {OTHER_GAMES_DATA.map((game) => (
+    <SubPageShell
+      pageTitle="타게임 목록"
+      eyebrow="WEEKEND PLAYZONE"
+      title="주말엔 타게임도 다 같이 달려요!"
+      description="스팀 게임, 마피아, 파티 게임 등 길드원들과 함께 즐기는 타게임 목록이에요. 카드를 누르면 스토어로 이동해요."
+    >
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        {OTHER_GAMES_DATA.map((game) => (
+          <li key={game.id}>
             <a
-              key={game.id}
               href={game.storeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:border-amber-200 transition-all duration-200 flex flex-col"
+              className="group h-full flex flex-col overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1813] to-[#15120f] border border-white/[0.07] hover:border-amber-400/45 hover:-translate-y-1 transition duration-300 motion-reduce:transition-none outline-none focus-visible:ring-4 focus-visible:ring-amber-400/60"
             >
-              {/* 이미지 영역 (필터 효과 최소화) */}
-              <div className="relative aspect-video w-full bg-stone-100 border-b border-stone-100">
+              <div className="relative aspect-video w-full bg-stone-900">
                 <Image
                   src={game.image}
                   alt={game.title}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04] motion-reduce:transition-none"
                 />
-                <div className="absolute top-3 right-3 bg-stone-900/90 text-amber-100 text-[11px] font-bold px-2 py-1 rounded-md">
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#15120f] via-transparent to-transparent" />
+                <span className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-stone-900/85 backdrop-blur-sm border border-white/10 text-xs text-amber-200">
                   {game.platform}
-                </div>
-              </div>
-
-              {/* 텍스트 정보 영역 */}
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="text-[11px] font-bold text-stone-500 whitespace-nowrap mt-0.5">
-                      {game.genre}
-                    </span>
-                    
-                    {game.specialBadges && (
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        {game.specialBadges.map((badge, idx) => (
-                          <span key={idx} className="px-2 py-0.5 text-[12px] font-black bg-orange-50 text-orange-600 border border-orange-200 rounded-md shadow-sm whitespace-nowrap">
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <h2 className="text-lg font-black text-stone-800 group-hover:text-amber-700 transition-colors flex items-center justify-between mb-3">
-                    {game.title}
-                    <ExternalLink className="w-4 h-4 text-stone-400 group-hover:text-amber-600 shrink-0" />
-                  </h2>
-
-                  <p className="text-[13px] sm:text-sm text-stone-600 font-medium leading-relaxed break-keep">
-                    {game.description}
-                  </p>
-                </div>
-
-                {/* 태그 및 액션 */}
-                <div className="mt-5">
-                  <div className="flex flex-wrap gap-1.5">
-                    {game.tags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[11px] font-bold text-stone-500 bg-stone-100 px-2 py-1 rounded-md"
-                      >
-                        #{tag}
+                </span>
+                {game.specialBadges && (
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                    {game.specialBadges.map((badge) => (
+                      <span key={badge} className="px-2.5 py-1 rounded-lg bg-amber-400 text-stone-900 text-xs whitespace-nowrap">
+                        {badge}
                       </span>
                     ))}
                   </div>
-                </div>
+                )}
+              </div>
+
+              <div className="flex-1 flex flex-col p-6">
+                <p className="mb-1.5 text-sm text-stone-400">{game.genre}</p>
+                <h2 className="mb-3 flex items-start justify-between gap-3 text-xl leading-snug text-white group-hover:text-amber-300 transition-colors break-keep">
+                  {game.title}
+                  <ExternalLink className="w-[18px] h-[18px] mt-1 shrink-0 text-stone-500 group-hover:text-amber-400 transition-colors" aria-hidden />
+                </h2>
+                <p className="text-[15px] leading-relaxed text-stone-300 break-keep">{game.description}</p>
+
+                <ul aria-label="태그" className="mt-auto pt-5 flex flex-wrap gap-1.5">
+                  {game.tags.map((tag) => (
+                    <li key={tag} className="px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] text-xs text-stone-300">
+                      #{tag}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </a>
-          ))}
-        </div>
-      </main>
-    </div>
+          </li>
+        ))}
+      </ul>
+    </SubPageShell>
   );
 }
